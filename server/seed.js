@@ -19,16 +19,16 @@ const courseNames = {
   'Engineering': ['Circuit Analysis', 'Thermodynamics', 'Fluid Mechanics', 'Materials Science', 'Control Systems'],
 };
 
-const firstNames = ['Ahmed', 'Muhammad', 'Ali', 'Fatima', 'Ayesha', 'Hassan', 'Husain', 'Zainab', 'Omar', 'Khadija',
-  'Bilal', 'Sana', 'Usman', 'Noor', 'Tariq', 'Amna', 'Farhan', 'Rabia', 'Kamran', 'Sadia',
-  'Imran', 'Saima', 'Junaid', 'Tabassum', 'Nabeel', 'Shazia', 'Faisal', 'Ghazala', 'Zubair', 'Nadia',
-  'Waqar', 'Parveen', 'Adil', 'Shahida', 'Rashid', 'Yasmin', 'Tahir', 'Nasreen', 'Asif', 'Kishwar',
-  'Javed', 'Anila', 'Sohail', 'Shaista', 'Nadeem', 'Farzana', 'Iqbal', 'Ruqayya', 'Akram', 'Shamim'];
+const firstNames = ['Muhammad', 'Ahmed', 'Ali', 'Hassan', 'Husain', 'Omar', 'Usman', 'Bilal', 'Tariq', 'Farhan',
+  'Imran', 'Junaid', 'Nabeel', 'Faisal', 'Zubair', 'Waqar', 'Adil', 'Rashid', 'Tahir', 'Asif',
+  'Sohail', 'Nadeem', 'Iqbal', 'Akram', 'Sufyan', 'Hamza', 'Zayan', 'Ayaan', 'Rayan', 'Ibrahim',
+  'Fatima', 'Ayesha', 'Zainab', 'Khadija', 'Sana', 'Amna', 'Rabia', 'Sadia', 'Saima', 'Shazia',
+  'Nadia', 'Parveen', 'Shahida', 'Yasmin', 'Nasreen', 'Anila', 'Shaista', 'Farzana', 'Ruqayya', 'Shamim'];
 
 const lastNames = ['Khan', 'Ahmed', 'Ali', 'Hussain', 'Sheikh', 'Malik', 'Siddiqui', 'Iqbal',
   'Butt', 'Chaudhry', 'Qureshi', 'Hashmi', 'Rizvi', 'Syed', 'Baig', 'Mirza',
-  'Usmani', 'Raja', 'Arain', 'Leghari', 'Khattak', 'Durrani', 'Gill', 'Jatoi',
-  'Memon', 'Pirzada', 'Shah', 'Gujjar', 'Rana', 'Ansari'];
+  'Usmani', 'Raja', 'Arain', 'Khattak', 'Durrani', 'Memon', 'Pirzada', 'Shah',
+  'Rana', 'Ansari', 'Gill', 'Jatoi', 'Leghari', 'Gujjar'];
 
 const grades = ['A+', 'A', 'B+', 'B', 'C+', 'C', 'D', 'F'];
 
@@ -56,9 +56,9 @@ const calculateOverall = (attendance, assignment, quiz, mid, final) => {
 const seedUsers = async () => {
   console.log('Seeding users...');
   const users = [
-    { name: 'Admin Ahmed', email: 'admin@spap.com', password: 'admin123', role: 'admin' },
-    { name: 'Teacher Fatima', email: 'teacher@spap.com', password: 'teacher123', role: 'teacher' },
-    { name: 'Student Ali', email: 'student@spap.com', password: 'student123', role: 'student' },
+    { name: 'Muhammad Asif', email: 'admin@spap.com', password: 'admin123', role: 'admin' },
+    { name: 'Fatima Khan', email: 'teacher@spap.com', password: 'teacher123', role: 'teacher' },
+    { name: 'Ali Raza', email: 'student@spap.com', password: 'student123', role: 'student' },
   ];
 
   for (const u of users) {

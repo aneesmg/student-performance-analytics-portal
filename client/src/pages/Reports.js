@@ -4,11 +4,11 @@ import './Reports.css';
 const Reports = () => {
   const [reportType, setReportType] = useState('class');
   const [students] = useState([
-    { id: 'STU001', name: 'Alice Wonderland', attendance: 92, assignment: 88, quiz: 85, mid: 78, final: 90, total: 86.2, grade: 'A' },
-    { id: 'STU002', name: 'Bob Smith', attendance: 85, assignment: 72, quiz: 68, mid: 80, final: 76, total: 75.9, grade: 'B+' },
-    { id: 'STU003', name: 'Charlie Brown', attendance: 78, assignment: 65, quiz: 70, mid: 72, final: 68, total: 70.1, grade: 'B' },
-    { id: 'STU004', name: 'Diana Prince', attendance: 95, assignment: 96, quiz: 92, mid: 90, final: 95, total: 93.5, grade: 'A+' },
-    { id: 'STU005', name: 'Eve Adams', attendance: 70, assignment: 60, quiz: 55, mid: 68, final: 62, total: 62.9, grade: 'C+' },
+    { id: 'STU001', name: 'Ayesha Khan', attendance: 92, assignment: 88, quiz: 85, mid: 78, final: 90, total: 86.2, grade: 'A' },
+    { id: 'STU002', name: 'Bilal Ahmed', attendance: 85, assignment: 72, quiz: 68, mid: 80, final: 76, total: 75.9, grade: 'B+' },
+    { id: 'STU003', name: 'Hassan Ali', attendance: 78, assignment: 65, quiz: 70, mid: 72, final: 68, total: 70.1, grade: 'B' },
+    { id: 'STU004', name: 'Fatima Hussain', attendance: 95, assignment: 96, quiz: 92, mid: 90, final: 95, total: 93.5, grade: 'A+' },
+    { id: 'STU005', name: 'Sana Malik', attendance: 70, assignment: 60, quiz: 55, mid: 68, final: 62, total: 62.9, grade: 'C+' },
   ]);
 
   return (
@@ -60,12 +60,12 @@ const Reports = () => {
           <div className="card summary-card">
             <h3>Highest Score</h3>
             <span className="summary-value">93.5%</span>
-            <span className="summary-label">Diana Prince</span>
+            <span className="summary-label">Fatima Hussain</span>
           </div>
           <div className="card summary-card">
             <h3>Lowest Score</h3>
             <span className="summary-value">62.9%</span>
-            <span className="summary-label">Eve Adams</span>
+            <span className="summary-label">Sana Malik</span>
           </div>
           <div className="card summary-card">
             <h3>Pass Rate</h3>

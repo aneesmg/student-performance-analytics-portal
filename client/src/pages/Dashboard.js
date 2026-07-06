@@ -10,12 +10,12 @@ const Dashboard = () => {
   ];
 
   const recentRecords = [
-    { id: 'STU001', name: 'Alice Wonderland', course: 'Computer Science', attendance: 92, score: 88, grade: 'A' },
-    { id: 'STU002', name: 'Bob Smith', course: 'Mathematics', attendance: 85, score: 76, grade: 'B+' },
-    { id: 'STU003', name: 'Charlie Brown', course: 'Physics', attendance: 78, score: 72, grade: 'B' },
-    { id: 'STU004', name: 'Diana Prince', course: 'Chemistry', attendance: 95, score: 94, grade: 'A+' },
-    { id: 'STU005', name: 'Eve Adams', course: 'Biology', attendance: 70, score: 65, grade: 'C+' },
-    { id: 'STU006', name: 'Frank Castle', course: 'Computer Science', attendance: 88, score: 82, grade: 'A-' },
+    { id: 'STU001', name: 'Ayesha Khan', course: 'Computer Science', attendance: 92, score: 88, grade: 'A' },
+    { id: 'STU002', name: 'Bilal Ahmed', course: 'Mathematics', attendance: 85, score: 76, grade: 'B+' },
+    { id: 'STU003', name: 'Hassan Ali', course: 'Physics', attendance: 78, score: 72, grade: 'B' },
+    { id: 'STU004', name: 'Fatima Hussain', course: 'Chemistry', attendance: 95, score: 94, grade: 'A+' },
+    { id: 'STU005', name: 'Sana Malik', course: 'Biology', attendance: 70, score: 65, grade: 'C+' },
+    { id: 'STU006', name: 'Usman Sheikh', course: 'Computer Science', attendance: 88, score: 82, grade: 'A-' },
   ];
 
   return (

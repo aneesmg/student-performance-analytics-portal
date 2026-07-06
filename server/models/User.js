@@ -9,6 +9,8 @@ const userSchema = new mongoose.Schema({
   phone: { type: String, trim: true },
   avatar: { type: String, default: '' },
   isActive: { type: Boolean, default: true },
+  resetPasswordToken: { type: String },
+  resetPasswordExpire: { type: Date },
 }, { timestamps: true });
 
 userSchema.pre('save', async function(next) {
