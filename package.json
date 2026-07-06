@@ -1,0 +1,14 @@
+﻿{
+  "name": "student-performance-analytics-portal",
+  "version": "1.0.0",
+  "description": "MERN Stack Student Performance Analytics Portal",
+  "scripts": {
+    "start": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "cd server && npm start",
+    "client": "cd client && npm start",
+    "install-all": "npm install && cd server && npm install && cd ../client && npm install"
+  },
+  "dependencies": {
+    "concurrently": "^8.2.0"
+  }
+}

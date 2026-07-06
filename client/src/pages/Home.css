@@ -1,0 +1,92 @@
+﻿.home {}
+
+.hero {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  padding: 80px 0;
+  color: #fff;
+}
+
+.hero-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: center;
+}
+
+.hero-text h1 {
+  font-size: 48px;
+  font-weight: 800;
+  line-height: 1.2;
+  margin-bottom: 20px;
+}
+
+.hero-text p {
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 32px;
+  line-height: 1.7;
+}
+
+.hero-buttons { display: flex; gap: 16px; }
+
+.hero-buttons .btn-outline {
+  border-color: rgba(255, 255, 255, 0.7);
+  color: #fff;
+}
+
+.hero-buttons .btn-outline:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: #fff;
+}
+
+.hero-visual { display: flex; justify-content: center; }
+
+.hero-card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 40px;
+  display: flex;
+  gap: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.hero-stat { text-align: center; }
+.hero-stat-value { font-size: 48px; font-weight: 800; color: var(--secondary); display: block; }
+.hero-stat-label { font-size: 14px; color: rgba(255, 255, 255, 0.7); }
+
+.stats-section { margin-top: -40px; position: relative; z-index: 10; }
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.stat-card { text-align: center; padding: 28px; }
+.stat-value { font-size: 36px; font-weight: 800; color: var(--primary); }
+.stat-label { font-size: 14px; color: var(--text-secondary); margin-top: 4px; }
+
+.features-section { padding: 80px 0; text-align: center; }
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+
+.feature-card { text-align: center; padding: 32px 20px; }
+.feature-icon { font-size: 40px; display: block; margin-bottom: 16px; }
+.feature-card h3 { font-size: 18px; margin-bottom: 12px; color: var(--primary); }
+.feature-card p { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+
+@media (max-width: 768px) {
+  .hero { padding: 60px 0; }
+  .hero-content { grid-template-columns: 1fr; gap: 40px; }
+  .hero-text h1 { font-size: 32px; }
+  .hero-buttons { flex-direction: column; }
+  .hero-card { padding: 24px; gap: 24px; }
+  .hero-stat-value { font-size: 36px; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .features-grid { grid-template-columns: 1fr; }
+}
