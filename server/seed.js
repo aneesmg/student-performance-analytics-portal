@@ -19,16 +19,16 @@ const courseNames = {
   'Engineering': ['Circuit Analysis', 'Thermodynamics', 'Fluid Mechanics', 'Materials Science', 'Control Systems'],
 };
 
-const firstNames = ['Alice', 'Bob', 'Charlie', 'Diana', 'Eve', 'Frank', 'Grace', 'Henry', 'Ivy', 'Jack',
-  'Kate', 'Leo', 'Mia', 'Noah', 'Olivia', 'Paul', 'Quinn', 'Rose', 'Sam', 'Tina',
-  'Uma', 'Victor', 'Wendy', 'Xander', 'Yara', 'Zack', 'Aria', 'Blake', 'Cora', 'Dylan',
-  'Elena', 'Finn', 'Gina', 'Hank', 'Isla', 'Jake', 'Kara', 'Liam', 'Nina', 'Oscar',
-  'Pia', 'Rex', 'Sage', 'Theo', 'Una', 'Vince', 'Wade', 'Xena', 'Yuki', 'Zane'];
+const firstNames = ['Ahmed', 'Muhammad', 'Ali', 'Fatima', 'Ayesha', 'Hassan', 'Husain', 'Zainab', 'Omar', 'Khadija',
+  'Bilal', 'Sana', 'Usman', 'Noor', 'Tariq', 'Amna', 'Farhan', 'Rabia', 'Kamran', 'Sadia',
+  'Imran', 'Saima', 'Junaid', 'Tabassum', 'Nabeel', 'Shazia', 'Faisal', 'Ghazala', 'Zubair', 'Nadia',
+  'Waqar', 'Parveen', 'Adil', 'Shahida', 'Rashid', 'Yasmin', 'Tahir', 'Nasreen', 'Asif', 'Kishwar',
+  'Javed', 'Anila', 'Sohail', 'Shaista', 'Nadeem', 'Farzana', 'Iqbal', 'Ruqayya', 'Akram', 'Shamim'];
 
-const lastNames = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis',
-  'Rodriguez', 'Martinez', 'Hernandez', 'Lopez', 'Gonzalez', 'Wilson', 'Anderson', 'Thomas',
-  'Taylor', 'Moore', 'Jackson', 'Martin', 'Lee', 'Perez', 'White', 'Harris', 'Sanchez',
-  'Clark', 'Ramirez', 'Lewis', 'Robinson', 'Walker'];
+const lastNames = ['Khan', 'Ahmed', 'Ali', 'Hussain', 'Sheikh', 'Malik', 'Siddiqui', 'Iqbal',
+  'Butt', 'Chaudhry', 'Qureshi', 'Hashmi', 'Rizvi', 'Syed', 'Baig', 'Mirza',
+  'Usmani', 'Raja', 'Arain', 'Leghari', 'Khattak', 'Durrani', 'Gill', 'Jatoi',
+  'Memon', 'Pirzada', 'Shah', 'Gujjar', 'Rana', 'Ansari'];
 
 const grades = ['A+', 'A', 'B+', 'B', 'C+', 'C', 'D', 'F'];
 
@@ -56,9 +56,9 @@ const calculateOverall = (attendance, assignment, quiz, mid, final) => {
 const seedUsers = async () => {
   console.log('Seeding users...');
   const users = [
-    { name: 'Admin User', email: 'admin@spap.com', password: 'admin123', role: 'admin' },
-    { name: 'Teacher Sarah', email: 'teacher@spap.com', password: 'teacher123', role: 'teacher' },
-    { name: 'Student John', email: 'student@spap.com', password: 'student123', role: 'student' },
+    { name: 'Admin Ahmed', email: 'admin@spap.com', password: 'admin123', role: 'admin' },
+    { name: 'Teacher Fatima', email: 'teacher@spap.com', password: 'teacher123', role: 'teacher' },
+    { name: 'Student Ali', email: 'student@spap.com', password: 'student123', role: 'student' },
   ];
 
   for (const u of users) {
@@ -135,7 +135,7 @@ const seedStudents = async (count = 100) => {
       dateOfBirth: new Date(randomInt(1998, 2005), randomInt(0, 11), randomInt(1, 28)),
       gender: randomItem(['Male', 'Female']),
       phone: `+1${String(randomInt(2000000000, 9999999999))}`,
-      address: `${randomInt(100, 9999)} ${randomItem(['Main', 'Oak', 'Elm', 'Park', 'Lake'])} St, ${randomItem(['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix'])}, USA`,
+      address: `${randomInt(100, 9999)} ${randomItem(['Main', 'Mall', 'Garden', 'Park', 'Lake'])} St, ${randomItem(['Karachi', 'Lahore', 'Islamabad', 'Rawalpindi', 'Faisalabad', 'Multan', 'Peshawar'])}, Pakistan`,
       course: dept,
       semester,
       enrollmentYear: year,

@@ -29,6 +29,23 @@ app.use('/api/performance', require('./routes/performance'));
 app.use('/api/reports', require('./routes/reports'));
 app.use('/api/courses', require('./routes/courses'));
 
+// Root route
+app.get('/', (req, res) => {
+  res.json({
+    name: 'Student Performance Analytics Portal API',
+    version: '2.0.0',
+    status: 'running',
+    documentation: '/api/health',
+    endpoints: {
+      auth: '/api/auth (login, register, me)',
+      students: '/api/students (CRUD, search, filter)',
+      performance: '/api/performance (records, stats, grades)',
+      courses: '/api/courses (CRUD)',
+      reports: '/api/reports (summary, grades)',
+    },
+  });
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Server is running', timestamp: new Date().toISOString() });

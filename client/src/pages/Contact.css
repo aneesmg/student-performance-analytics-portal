@@ -1,4 +1,4 @@
-﻿.contact-header { padding: 40px 0 24px; text-align: center; }
+.contact-header { padding: 40px 0 24px; text-align: center; }
 .contact-header h1 { font-size: 32px; color: var(--primary); }
 .contact-header p { color: var(--text-secondary); }
 

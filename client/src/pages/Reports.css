@@ -1,4 +1,4 @@
-﻿.reports-header { padding: 40px 0 24px; text-align: center; }
+.reports-header { padding: 40px 0 24px; text-align: center; }
 .reports-header h1 { font-size: 32px; color: var(--primary); }
 .reports-header p { color: var(--text-secondary); }
 
