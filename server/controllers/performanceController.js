@@ -14,21 +14,47 @@ exports.getPerformanceByStudent = async (req, res) => {
 
 exports.getAllPerformances = async (req, res) => {
   try {
-    const { page = 1, limit = 20, course, semester, grade } = req.query;
+    const {
+      page = 1, limit = 20, course, semester, grade,
+      academicYear, sortBy = 'overallPercentage', sortOrder = 'desc',
+      minScore, maxScore,
+    } = req.query;
+
     const query = {};
-    if (course) query.course = course;
+
+    if (course) query.course = { $regex: course, $options: 'i' };
     if (semester) query.semester = parseInt(semester);
     if (grade) query.grade = grade;
+    if (academicYear) query.academicYear = academicYear;
+
+    if (minScore || maxScore) {
+      query.overallPercentage = {};
+      if (minScore) query.overallPercentage.$gte = parseFloat(minScore);
+      if (maxScore) query.overallPercentage.$lte = parseFloat(maxScore);
+    }
+
+    const sortObj = {};
+    sortObj[sortBy] = sortOrder === 'asc' ? 1 : -1;
 
     const performances = await Performance.find(query)
-      .populate('student', 'name studentId course')
+      .populate('student', 'name studentId course semester')
       .limit(parseInt(limit))
       .skip((parseInt(page) - 1) * parseInt(limit))
-      .sort({ overallPercentage: -1 });
+      .sort(sortObj);
 
     const total = await Performance.countDocuments(query);
 
-    res.json({ performances, total, page: parseInt(page), pages: Math.ceil(total / parseInt(limit)) });
+    res.json({
+      performances,
+      pagination: {
+        total,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        pages: Math.ceil(total / parseInt(limit)),
+        hasNext: parseInt(page) < Math.ceil(total / parseInt(limit)),
+        hasPrev: parseInt(page) > 1,
+      },
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });

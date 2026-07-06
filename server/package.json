@@ -1,20 +1,25 @@
 ﻿{
   "name": "spap-server",
-  "version": "1.0.0",
-  "description": "Student Performance Analytics Portal - Backend",
+  "version": "2.0.0",
+  "description": "Student Performance Analytics Portal - Backend (Week 2)",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "seed": "node seed.js",
+    "seed:students": "node seed.js --students 50",
+    "seed:all": "node seed.js --all"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "mongoose": "^7.6.0",
+    "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
-    "bcryptjs": "^2.4.3",
+    "express": "^4.18.2",
+    "express-validator": "^7.0.1",
+    "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
-    "express-validator": "^7.0.1"
+    "mongoose": "^7.6.0",
+    "morgan": "^1.10.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
