@@ -1,0 +1,261 @@
+﻿{
+  "info": {
+    "name": "Student Performance Analytics Portal API",
+    "description": "Complete API collection for SPAP - Week 2 MERN Stack\n\nBase URL: http://localhost:5000/api\nAuth: x-auth-token header with JWT token",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "spap-intern"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var json = pm.response.json();",
+                  "    pm.collectionVariables.set('token', json.token);",
+                  "    pm.collectionVariables.set('userId', json.user.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test User\",\n  \"email\": \"test@example.com\",\n  \"password\": \"test123456\",\n  \"role\": \"student\"\n}"
+            },
+            "url": {"raw": "{{base_url}}/auth/register", "host": ["{{base_url}}"], "path": ["auth", "register"]}
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var json = pm.response.json();",
+                  "    pm.collectionVariables.set('token', json.token);",
+                  "    pm.collectionVariables.set('userId', json.user.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@spap.com\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": {"raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth", "login"]}
+          }
+        },
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "x-auth-token", "value": "{{token}}"}],
+            "url": {"raw": "{{base_url}}/auth/me", "host": ["{{base_url}}"], "path": ["auth", "me"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "Students",
+      "item": [
+        {
+          "name": "Get All Students",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "x-auth-token", "value": "{{token}}"}],
+            "url": {
+              "raw": "{{base_url}}/students?page=1&limit=10&search=&course=&semester=",
+              "host": ["{{base_url}}"],
+              "path": ["students"],
+              "query": [
+                {"key": "page", "value": "1"},
+                {"key": "limit", "value": "10"},
+                {"key": "search", "value": ""},
+                {"key": "course", "value": ""},
+                {"key": "semester", "value": ""}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Student By ID",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "x-auth-token", "value": "{{token}}"}],
+            "url": {"raw": "{{base_url}}/students/{{student_id}}", "host": ["{{base_url}}"], "path": ["students", "{{student_id}}"]}
+          }
+        },
+        {
+          "name": "Create Student",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "x-auth-token", "value": "{{token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": \"STU2026101\",\n  \"name\": \"New Student\",\n  \"email\": \"new.student@example.com\",\n  \"course\": \"Computer Science\",\n  \"semester\": 1,\n  \"enrollmentYear\": 2026,\n  \"dateOfBirth\": \"2004-06-15\",\n  \"gender\": \"Female\",\n  \"phone\": \"+15551234567\",\n  \"address\": \"456 University Ave, Boston, USA\",\n  \"guardianName\": \"Parent Name\",\n  \"guardianPhone\": \"+15559876543\"\n}"
+            },
+            "url": {"raw": "{{base_url}}/students", "host": ["{{base_url}}"], "path": ["students"]}
+          }
+        },
+        {
+          "name": "Update Student",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "x-auth-token", "value": "{{token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"+15559998888\",\n  \"address\": \"789 Updated Street, Chicago, USA\"\n}"
+            },
+            "url": {"raw": "{{base_url}}/students/{{student_id}}", "host": ["{{base_url}}"], "path": ["students", "{{student_id}}"]}
+          }
+        },
+        {
+          "name": "Delete Student",
+          "request": {
+            "method": "DELETE",
+            "header": [{"key": "x-auth-token", "value": "{{token}}"}],
+            "url": {"raw": "{{base_url}}/students/{{student_id}}", "host": ["{{base_url}}"], "path": ["students", "{{student_id}}"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "Performance",
+      "item": [
+        {
+          "name": "Get All Performance Records",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "x-auth-token", "value": "{{token}}"}],
+            "url": {"raw": "{{base_url}}/performance?page=1&limit=20", "host": ["{{base_url}}"], "path": ["performance"], "query": [{"key": "page", "value": "1"}, {"key": "limit", "value": "20"}]}
+          }
+        },
+        {
+          "name": "Get Performance Stats",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "x-auth-token", "value": "{{token}}"}],
+            "url": {"raw": "{{base_url}}/performance/stats", "host": ["{{base_url}}"], "path": ["performance", "stats"]}
+          }
+        },
+        {
+          "name": "Get Grade Distribution",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "x-auth-token", "value": "{{token}}"}],
+            "url": {"raw": "{{base_url}}/performance/grade-distribution", "host": ["{{base_url}}"], "path": ["performance", "grade-distribution"]}
+          }
+        },
+        {
+          "name": "Get Performance By Student",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "x-auth-token", "value": "{{token}}"}],
+            "url": {"raw": "{{base_url}}/performance/{{student_id}}", "host": ["{{base_url}}"], "path": ["performance", "{{student_id}}"]}
+          }
+        },
+        {
+          "name": "Create Performance Record",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "x-auth-token", "value": "{{token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"student\": \"{{student_id}}\",\n  \"course\": \"Computer Science\",\n  \"semester\": 2,\n  \"academicYear\": \"2025-2026\",\n  \"attendance\": 90,\n  \"assignmentScore\": 85,\n  \"quizScore\": 80,\n  \"midExamScore\": 75,\n  \"finalExamScore\": 88\n}"
+            },
+            "url": {"raw": "{{base_url}}/performance", "host": ["{{base_url}}"], "path": ["performance"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "Courses",
+      "item": [
+        {
+          "name": "Get All Courses",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "x-auth-token", "value": "{{token}}"}],
+            "url": {"raw": "{{base_url}}/courses", "host": ["{{base_url}}"], "path": ["courses"]}
+          }
+        },
+        {
+          "name": "Create Course",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "x-auth-token", "value": "{{token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courseCode\": \"CS999\",\n  \"courseName\": \"Test Course\",\n  \"credits\": 3,\n  \"department\": \"Computer Science\",\n  \"semester\": 1,\n  \"instructor\": \"Dr. Smith\",\n  \"description\": \"A test course for API validation\"\n}"
+            },
+            "url": {"raw": "{{base_url}}/courses", "host": ["{{base_url}}"], "path": ["courses"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "System",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "url": {"raw": "{{base_url}}/health", "host": ["{{base_url}}"], "path": ["health"]}
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000/api",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "student_id",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
