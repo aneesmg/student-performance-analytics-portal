@@ -2,30 +2,38 @@
 
 A full-stack MERN application for tracking, analyzing, and reporting student academic performance.
 
-## Week 2 — Backend Foundation & Database Setup
+## Week 5 — Advanced Dashboards, Data Management & Reporting
 
-This week transforms Week 1 architecture into a fully functional backend with MongoDB, Express APIs, and CRUD operations.
+Role-based dashboards with interactive charts, advanced search/filter/pagination, data export (CSV/PDF), real-time notifications, and comprehensive error handling.
 
 ## Deliverables
 
 | # | Deliverable | Status |
 |---|-------------|--------|
-| 1 | Node.js Project Setup | Done |
-| 2 | Express Server Configuration | Done |
-| 3 | MongoDB Database Setup | Done |
-| 4 | Student Collection Schema | Done |
-| 5 | REST APIs (CRUD) | Done |
-| 6 | API Testing with Postman | Done |
-| 7 | Organized Project Structure | Done |
+| 1 | Advanced Search & Filter System | Done |
+| 2 | Pagination for Student Records | Done |
+| 3 | Export Features (CSV/PDF) | Done |
+| 4 | Interactive Charts (Canvas-based) | Done |
+| 5 | Notification & Activity Widgets | Done |
+| 6 | Form Validation & Error Handling | Done |
+| 7 | Role-Based Dashboards (Admin/Teacher/Student) | Done |
+| 8 | Search/Filter/Pagination APIs | Done |
+| 9 | Report Export APIs (CSV/PDF) | Done |
+| 10 | Error Handling & Logging Middleware | Done |
+| 11 | API Documentation & Postman Collection | Done |
+| 12 | Data Analysis Scripts (Python/Matplotlib) | Done |
+| 13 | Mobile App Scaffold (Flutter) | In Progress |
 
 ## Tech Stack
 
-- **Frontend:** React 18, React Router v6, Recharts, Axios
+- **Frontend:** React 18, React Router v6, Canvas API (charts), Axios
 - **Backend:** Node.js, Express.js, Mongoose, JWT, bcryptjs
 - **Database:** MongoDB
-- **Security:** Helmet, CORS, Rate Limiting
-- **Logging:** Morgan
+- **Security:** Helmet, CORS
+- **Logging:** Morgan, Custom Logger
 - **Validation:** express-validator
+- **Analysis:** Python, Pandas, Matplotlib
+- **Mobile:** Flutter, Dart
 
 ## Project Structure
 
@@ -33,45 +41,26 @@ This week transforms Week 1 architecture into a fully functional backend with Mo
 ├── client/                          # React frontend
 │   ├── public/
 │   └── src/
-│       ├── components/              # Navbar, Footer
-│       ├── pages/                   # Home, About, Dashboard, Reports, Contact
-│       ├── services/                # Axios API client
-│       └── styles/                  # Global CSS
+│       ├── components/              # Charts, SearchFilter, Pagination, ExportOptions,
+│       │                           # NotificationWidget, RecentActivity, Navbar, Footer
+│       ├── pages/                   # Dashboard, Students, Reports, Login, Register, Profile
+│       ├── services/                # Axios API client (auth, student, performance, report, course)
+│       ├── context/                 # AuthContext (JWT-based auth)
+│       └── styles/                  # Global CSS, dashboard.css
 ├── server/                          # Express backend
-│   ├── config/                      # App & DB configuration
-│   │   ├── index.js                 # Centralized config
-│   │   └── db.js                    # DB connection settings
-│   ├── controllers/                 # Route handlers
-│   │   ├── authController.js        # Register, Login, Profile
-│   │   ├── studentController.js     # CRUD + search/filter
-│   │   ├── performanceController.js # CRUD + stats/aggregation
-│   │   └── courseController.js      # CRUD
-│   ├── middleware/                  # Express middleware
-│   │   ├── auth.js                  # JWT verification
-│   │   ├── roleAuth.js             # Role-based access
-│   │   └── validate.js             # Request validation
-│   ├── models/                      # Mongoose schemas
-│   │   ├── User.js                  # User accounts
-│   │   ├── Student.js               # Student records
-│   │   ├── Performance.js           # Academic performance
-│   │   └── Course.js                # Course catalog
-│   ├── routes/                      # API route definitions
-│   │   ├── auth.js                  # /api/auth/*
-│   │   ├── students.js              # /api/students/*
-│   │   ├── performance.js           # /api/performance/*
-│   │   ├── reports.js               # /api/reports/*
-│   │   └── courses.js               # /api/courses/*
+│   ├── controllers/                 # authController, studentController,
+│   │                               # performanceController, courseController, reportController
+│   ├── middleware/                  # auth (JWT), roleAuth, validate, errorHandler, logger
+│   ├── models/                      # User, Student, Performance, Course
+│   ├── routes/                      # auth, students, performance, reports, courses
 │   ├── server.js                    # Entry point
-│   ├── seed.js                      # Database seeder (100+ records)
+│   ├── seed.js                      # Database seeder (users, 40+ courses, 100 students)
+│   ├── API_DOCUMENTATION.md         # Full API reference
 │   └── SPAP_Postman_Collection.json # Postman test collection
-└── docs/                            # Documentation
-    ├── architecture/
-    ├── api/
-    │   ├── api-documentation.md      # Full API reference
-    │   └── postman-testing-guide.md  # Postman setup guide
-    ├── database/
-    ├── roles/
-    └── wireframes/
+├── analysis/                        # Python analysis scripts
+│   └── analyze.py                   # Subject analysis, grade distribution, trends, reports
+├── design-system/                   # Design tokens, components, screens documentation
+└── mobile/                          # Flutter mobile app (pubspec.yaml scaffold)
 ```
 
 ## API Endpoints
@@ -84,39 +73,45 @@ This week transforms Week 1 architecture into a fully functional backend with Mo
 | GET    | /api/auth/me       | Yes | Get profile    |
 
 ### Students
-| Method | Endpoint             | Auth | Roles       | Description            |
-|--------|---------------------|------|-------------|------------------------|
-| GET    | /api/students       | Yes  | All         | List + search/filter   |
-| GET    | /api/students/:id   | Yes  | All         | Get by ID or studentId |
-| POST   | /api/students       | Yes  | Admin,Teacher | Create student      |
-| PUT    | /api/students/:id   | Yes  | Admin,Teacher | Update student      |
-| DELETE | /api/students/:id   | Yes  | Admin       | Delete student        |
+| Method | Endpoint                    | Auth | Roles       | Description                  |
+|--------|----------------------------|------|-------------|------------------------------|
+| GET    | /api/students              | Yes  | All         | List + search/filter/paginate|
+| GET    | /api/students/filter-options| Yes  | All         | Get filter dropdown options  |
+| GET    | /api/students/:id          | Yes  | All         | Get by ID or studentId       |
+| POST   | /api/students              | Yes  | Admin,Teacher | Create student            |
+| PUT    | /api/students/:id          | Yes  | Admin,Teacher | Update student            |
+| DELETE | /api/students/:id          | Yes  | Admin       | Delete student               |
 
 ### Performance
-| Method | Endpoint                         | Auth | Description              |
-|--------|---------------------------------|------|--------------------------|
-| GET    | /api/performance                | Yes  | List + filter/sort       |
-| GET    | /api/performance/stats          | Yes  | Aggregate statistics     |
-| GET    | /api/performance/grade-distribution | Yes | Grade distribution     |
-| GET    | /api/performance/:studentId     | Yes  | Student performances     |
-| POST   | /api/performance                | Yes  | Create record            |
-| PUT    | /api/performance/:id            | Yes  | Update record            |
-| DELETE | /api/performance/:id            | Yes  | Delete record            |
+| Method | Endpoint                          | Auth | Description                    |
+|--------|----------------------------------|------|--------------------------------|
+| GET    | /api/performance                 | Yes  | List + search/filter/paginate  |
+| GET    | /api/performance/stats           | Yes  | Aggregate statistics           |
+| GET    | /api/performance/grade-distribution| Yes | Grade distribution           |
+| GET    | /api/performance/filter-options  | Yes  | Get filter dropdown options    |
+| GET    | /api/performance/:studentId      | Yes  | Student performances           |
+| POST   | /api/performance                 | Yes  | Create record                  |
+| PUT    | /api/performance/:id             | Yes  | Update record                  |
+| DELETE | /api/performance/:id             | Yes  | Delete record                  |
 
 ### Courses
-| Method | Endpoint          | Auth | Roles | Description      |
-|--------|------------------|------|-------|------------------|
-| GET    | /api/courses      | Yes  | All   | List courses     |
-| GET    | /api/courses/:id  | Yes  | All   | Get course       |
-| POST   | /api/courses      | Yes  | Admin | Create course    |
-| PUT    | /api/courses/:id  | Yes  | Admin | Update course    |
-| DELETE | /api/courses/:id  | Yes  | Admin | Delete course    |
+| Method | Endpoint             | Auth | Roles | Description          |
+|--------|---------------------|------|-------|----------------------|
+| GET    | /api/courses         | Yes  | All   | List + search/filter/paginate |
+| GET    | /api/courses/departments | Yes | All | Get departments     |
+| GET    | /api/courses/:id     | Yes  | All   | Get course           |
+| POST   | /api/courses         | Yes  | Admin | Create course        |
+| PUT    | /api/courses/:id     | Yes  | Admin | Update course        |
+| DELETE | /api/courses/:id     | Yes  | Admin | Delete course        |
 
 ### Reports
-| Method | Endpoint               | Auth | Description          |
-|--------|------------------------|------|----------------------|
-| GET    | /api/reports/summary   | Yes  | Performance summary  |
-| GET    | /api/reports/grades    | Yes  | Grade distribution   |
+| Method | Endpoint                   | Auth | Description                    |
+|--------|---------------------------|------|--------------------------------|
+| GET    | /api/reports/summary      | Yes  | Performance summary + insights |
+| GET    | /api/reports/grades       | Yes  | Grade distribution + breakdown |
+| GET    | /api/reports/compare      | Yes  | Compare students by IDs        |
+| GET    | /api/reports/export/csv   | Yes  | Export as CSV (students/performances) |
+| GET    | /api/reports/export/pdf   | Yes  | Export comprehensive report    |
 
 ### System
 | Method | Endpoint       | Auth | Description    |
@@ -160,23 +155,27 @@ npm run seed
 ### Development
 
 ```bash
-cd server
-npm run dev
+# Run both client and server concurrently (from root)
+npm start
+
+# Or run individually:
+cd server && npm run dev    # Backend on :5000
+cd client && npm start      # Frontend on :3000
 ```
 
 ### Test with Postman
 
 1. Import `server/SPAP_Postman_Collection.json` into Postman
 2. Run Health Check → Login → CRUD operations
-3. See `docs/api/postman-testing-guide.md` for details
+3. See `server/API_DOCUMENTATION.md` for full API reference
 
 ## User Roles
 
-| Role    | Access Level                              |
-|---------|-------------------------------------------|
-| Admin   | Full system access (manage users, delete) |
-| Teacher | Manage students & grades, view reports    |
-| Student | View personal performance only            |
+| Role    | Dashboard           | Students | Reports | Profile |
+|---------|---------------------|----------|---------|---------|
+| Admin   | Full system stats   | Full CRUD access | All reports + export | View/Edit |
+| Teacher | Class performance   | View + manage     | All reports + export | View/Edit |
+| Student | Personal performance| Restricted        | Restricted          | View/Edit |
 
 ### Default Login Credentials (Dev)
 
@@ -188,12 +187,8 @@ npm run dev
 
 ## Documentation
 
-- [System Architecture](docs/architecture/architecture.md)
-- [Database Schema](docs/database/database-schema.md)
-- [API Documentation](docs/api/api-documentation.md)
-- [Postman Testing Guide](docs/api/postman-testing-guide.md)
-- [User Roles](docs/roles/user-roles.md)
-- [Wireframes](docs/wireframes/wireframes.md)
+- [API Documentation](server/API_DOCUMENTATION.md)
+- [Design System](design-system/design-system.md)
 
 ## License
 
