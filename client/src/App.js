@@ -31,8 +31,8 @@ function App() {
           <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
           <Route path="/register" element={user ? <Navigate to="/" replace /> : <Register />} />
           <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-          <Route path="/students" element={<PrivateRoute><Students /></PrivateRoute>} />
-          <Route path="/reports" element={<PrivateRoute><Reports /></PrivateRoute>} />
+          <Route path="/students" element={<PrivateRoute roles={['admin', 'teacher']}><Students /></PrivateRoute>} />
+          <Route path="/reports" element={<PrivateRoute roles={['admin', 'teacher']}><Reports /></PrivateRoute>} />
           <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

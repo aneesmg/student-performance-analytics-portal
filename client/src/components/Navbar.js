@@ -7,11 +7,23 @@ function Navbar() {
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const links = [
-    { to: '/', label: 'Dashboard', icon: '📊' },
-    { to: '/students', label: 'Students', icon: '👥' },
-    { to: '/reports', label: 'Reports', icon: '📈' },
-  ];
+  const roleLinks = {
+    admin: [
+      { to: '/', label: 'Dashboard', icon: '📊' },
+      { to: '/students', label: 'Students', icon: '👥' },
+      { to: '/reports', label: 'Reports', icon: '📈' },
+    ],
+    teacher: [
+      { to: '/', label: 'Dashboard', icon: '📊' },
+      { to: '/students', label: 'Students', icon: '👥' },
+      { to: '/reports', label: 'Reports', icon: '📈' },
+    ],
+    student: [
+      { to: '/', label: 'Dashboard', icon: '📊' },
+    ],
+  };
+
+  const links = roleLinks[user?.role] || roleLinks.student;
 
   const isActive = (path) => location.pathname === path;
 
