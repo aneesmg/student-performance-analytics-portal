@@ -4,67 +4,62 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const morgan = require('morgan');
 const helmet = require('helmet');
+const path = require('path');
+const logger = require('./middleware/logger');
+const { errorHandler } = require('./middleware/errorHandler');
 
 dotenv.config();
 
 const app = express();
 
-// Security & Logging Middleware
-app.use(helmet());
+app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(morgan('dev'));
 app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(logger);
 
-// Request Logger
-app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} | ${req.method} ${req.originalUrl}`);
-  next();
-});
-
-// Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/students', require('./routes/students'));
 app.use('/api/performance', require('./routes/performance'));
 app.use('/api/reports', require('./routes/reports'));
 app.use('/api/courses', require('./routes/courses'));
 
-// Root route
 app.get('/', (req, res) => {
   res.json({
     name: 'Student Performance Analytics Portal API',
-    version: '2.0.0',
+    version: '3.0.0',
     status: 'running',
-    documentation: '/api/health',
     endpoints: {
-      auth: '/api/auth (login, register, me)',
-      students: '/api/students (CRUD, search, filter)',
-      performance: '/api/performance (records, stats, grades)',
-      courses: '/api/courses (CRUD)',
-      reports: '/api/reports (summary, grades)',
+      auth: '/api/auth (register, login, me, profile)',
+      students: '/api/students (CRUD, search, filter, pagination)',
+      performance: '/api/performance (records, stats, grade-distribution, filter-options)',
+      courses: '/api/courses (CRUD, departments, search, pagination)',
+      reports: '/api/reports (summary, grades, compare, export/csv, export/pdf)',
     },
   });
 });
 
-// Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', message: 'Server is running', timestamp: new Date().toISOString() });
-});
-
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({ message: `Route ${req.originalUrl} not found` });
-});
-
-// Global error handler
-app.use((err, req, res, next) => {
-  console.error('Unhandled Error:', err.stack);
-  const status = err.status || 500;
-  res.status(status).json({
-    message: err.message || 'Internal Server Error',
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+  res.json({
+    success: true,
+    message: 'Server is running',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || 'development',
   });
 });
+
+app.use('/api/reports/download', express.static(path.join(__dirname, 'exports')));
+
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: `Route ${req.method} ${req.originalUrl} not found`,
+  });
+});
+
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 

@@ -1,101 +1,205 @@
-import React from 'react';
-import './Dashboard.css';
+import React, { useState, useEffect, useCallback } from 'react';
+import { performanceAPI, reportAPI } from '../services/api';
+import { useAuth } from '../context/AuthContext';
+import { BarChart, PieChart, LineChart } from '../components/Charts';
+import NotificationWidget from '../components/NotificationWidget';
+import RecentActivity from '../components/RecentActivity';
+import ExportOptions from '../components/ExportOptions';
 
-const Dashboard = () => {
-  const stats = [
-    { title: 'Total Students', value: '486', change: '+12%', color: '#1a237e' },
-    { title: 'Average Score', value: '76.4%', change: '+3.2%', color: '#2e7d32' },
-    { title: 'Pass Rate', value: '89%', change: '+1.5%', color: '#00bcd4' },
-    { title: 'At Risk', value: '42', change: '-8%', color: '#c62828' },
+function Dashboard() {
+  const { user } = useAuth();
+  const [stats, setStats] = useState(null);
+  const [summary, setSummary] = useState(null);
+  const [gradeDist, setGradeDist] = useState([]);
+  const [subjectPerf, setSubjectPerf] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [timeRange, setTimeRange] = useState('semester');
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const [statsRes, summaryRes, gradeRes] = await Promise.all([
+        performanceAPI.getStats(),
+        reportAPI.getSummary(),
+        reportAPI.getGradeReport(),
+      ]);
+
+      setStats(statsRes.data.data.stats);
+      setGradeDist(gradeRes.data.data.distribution || []);
+
+      const s = summaryRes.data.data;
+      setSummary(s.summary);
+      setSubjectPerf(s.subjectPerformances || []);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to load dashboard data');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  if (loading) {
+    return (
+      <div className="page-loading">
+        <div className="spinner"></div>
+        <p>Loading dashboard...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="page-error">
+        <h2>Error</h2>
+        <p>{error}</p>
+        <button className="btn btn-primary" onClick={fetchData}>Retry</button>
+      </div>
+    );
+  }
+
+  const statCards = [
+    { label: 'Total Students', value: stats?.totalRecords || 0, icon: '👥', color: '#1a237e' },
+    { label: 'Average Score', value: `${stats?.averageScore?.toFixed(1) || 0}%`, icon: '📊', color: '#2e7d32' },
+    { label: 'Average Attendance', value: `${stats?.averageAttendance?.toFixed(1) || 0}%`, icon: '📋', color: '#00bcd4' },
+    { label: 'Pass Rate', value: `${summary?.passRate || 0}%`, icon: '🎯', color: '#f9a825' },
   ];
 
-  const recentRecords = [
-    { id: 'STU001', name: 'Ayesha Khan', course: 'Computer Science', attendance: 92, score: 88, grade: 'A' },
-    { id: 'STU002', name: 'Bilal Ahmed', course: 'Mathematics', attendance: 85, score: 76, grade: 'B+' },
-    { id: 'STU003', name: 'Hassan Ali', course: 'Physics', attendance: 78, score: 72, grade: 'B' },
-    { id: 'STU004', name: 'Fatima Hussain', course: 'Chemistry', attendance: 95, score: 94, grade: 'A+' },
-    { id: 'STU005', name: 'Sana Malik', course: 'Biology', attendance: 70, score: 65, grade: 'C+' },
-    { id: 'STU006', name: 'Usman Sheikh', course: 'Computer Science', attendance: 88, score: 82, grade: 'A-' },
+  const gradeChartData = gradeDist.map((g) => ({
+    label: g.grade,
+    value: g.count,
+  }));
+
+  const subjectChartData = subjectPerf.slice(0, 8).map((s) => ({
+    label: s._id,
+    value: parseFloat(s.avgScore.toFixed(1)),
+  }));
+
+  const trendData = [
+    { label: 'Jan', value: 72 },
+    { label: 'Feb', value: 74 },
+    { label: 'Mar', value: 78 },
+    { label: 'Apr', value: 76 },
+    { label: 'May', value: 80 },
+    { label: 'Jun', value: 83 },
   ];
 
   return (
-    <div className="dashboard page">
-      <div className="container">
-        <div className="dash-header">
-          <h1>Student Dashboard</h1>
-          <p>Real-time overview of student performance metrics</p>
+    <div className="dashboard-page">
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Dashboard</h1>
+          <p className="page-subtitle">
+            Welcome back, {user?.name || 'User'}!
+            {summary && (
+              <span className="summary-update">
+                Last updated: {new Date().toLocaleDateString()}
+              </span>
+            )}
+          </p>
         </div>
+        <div className="page-actions">
+          <div className="time-range-selector">
+            <button
+              className={`btn btn-sm ${timeRange === 'semester' ? 'btn-primary' : 'btn-outline'}`}
+              onClick={() => setTimeRange('semester')}
+            >
+              This Semester
+            </button>
+            <button
+              className={`btn btn-sm ${timeRange === 'year' ? 'btn-primary' : 'btn-outline'}`}
+              onClick={() => setTimeRange('year')}
+            >
+              This Year
+            </button>
+          </div>
+          <ExportOptions type="performances" />
+        </div>
+      </div>
 
-        <div className="stats-cards">
-          {stats.map((s, i) => (
-            <div className="dash-stat-card card" key={i}>
-              <div className="dash-stat-icon" style={{ background: s.color }}></div>
-              <div className="dash-stat-info">
-                <span className="dash-stat-label">{s.title}</span>
-                <span className="dash-stat-value">{s.value}</span>
-              </div>
-              <span className={`dash-stat-change ${s.change.startsWith('+') ? 'up' : 'down'}`}>{s.change}</span>
+      <div className="stats-grid">
+        {statCards.map((card) => (
+          <div key={card.label} className="stat-card">
+            <div className="stat-icon" style={{ backgroundColor: card.color + '18', color: card.color }}>
+              {card.icon}
             </div>
-          ))}
-        </div>
-
-        <div className="dash-grid">
-          <div className="card dash-chart-card">
-            <h3>Grade Distribution</h3>
-            <div className="grade-bars">
-              {[
-                { grade: 'A+', count: 45, pct: 100 },
-                { grade: 'A', count: 78, pct: 90 },
-                { grade: 'B+', count: 92, pct: 80 },
-                { grade: 'B', count: 110, pct: 70 },
-                { grade: 'C+', count: 85, pct: 60 },
-                { grade: 'C', count: 52, pct: 40 },
-                { grade: 'D', count: 18, pct: 20 },
-                { grade: 'F', count: 6, pct: 10 },
-              ].map((g, i) => (
-                <div className="grade-row" key={i}>
-                  <span className="grade-label">{g.grade}</span>
-                  <div className="grade-bar-track">
-                    <div className="grade-bar-fill" style={{ width: `${g.pct}%` }}></div>
-                  </div>
-                  <span className="grade-count">{g.count}</span>
-                </div>
-              ))}
+            <div className="stat-info">
+              <p className="stat-label">{card.label}</p>
+              <p className="stat-value">{card.value}</p>
             </div>
           </div>
-          <div className="card dash-recent-card">
-            <h3>Recent Performance Records</h3>
-            <div className="table-wrapper">
-              <table className="dash-table">
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Course</th>
-                    <th>Attnd</th>
-                    <th>Score</th>
-                    <th>Grade</th>
+        ))}
+      </div>
+
+      <div className="dashboard-grid">
+        <div className="dashboard-card chart-card">
+          <BarChart
+            data={subjectChartData}
+            xKey="label"
+            yKey="value"
+            title="Average Score by Subject"
+            color="#1a237e"
+          />
+        </div>
+
+        <div className="dashboard-card chart-card">
+          <PieChart
+            data={gradeChartData}
+            labelKey="label"
+            valueKey="value"
+            title="Grade Distribution"
+          />
+        </div>
+
+        <div className="dashboard-card chart-card">
+          <LineChart
+            data={trendData}
+            xKey="label"
+            yKey="value"
+            title="Performance Trend (6 Months)"
+            color="#00bcd4"
+          />
+        </div>
+
+        <div className="dashboard-card chart-card">
+          <div className="subject-performance-summary">
+            <h3 className="chart-title">Top Performing Subjects</h3>
+            <table className="mini-table">
+              <thead>
+                <tr>
+                  <th>Subject</th>
+                  <th>Avg Score</th>
+                  <th>Students</th>
+                </tr>
+              </thead>
+              <tbody>
+                {subjectPerf.slice(0, 6).map((s) => (
+                  <tr key={s._id}>
+                    <td>{s._id}</td>
+                    <td>
+                      <span className={`score-badge ${s.avgScore >= 70 ? 'high' : s.avgScore >= 50 ? 'medium' : 'low'}`}>
+                        {s.avgScore.toFixed(1)}%
+                      </span>
+                    </td>
+                    <td>{s.studentCount}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {recentRecords.map((r, i) => (
-                    <tr key={i}>
-                      <td>{r.id}</td>
-                      <td>{r.name}</td>
-                      <td>{r.course}</td>
-                      <td>{r.attendance}%</td>
-                      <td>{r.score}%</td>
-                      <td><span className={`grade-badge grade-${r.grade[0].toLowerCase()}`}>{r.grade}</span></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
+
+      <div className="widgets-grid">
+        <NotificationWidget />
+        <RecentActivity />
+      </div>
     </div>
   );
-};
+}
 
 export default Dashboard;

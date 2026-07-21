@@ -1,124 +1,174 @@
-﻿const mongoose = require('mongoose');
 const Student = require('../models/Student');
 const Performance = require('../models/Performance');
+const { AppError } = require('../middleware/errorHandler');
 
-exports.getAllStudents = async (req, res) => {
+exports.getStudents = async (req, res, next) => {
   try {
     const {
-      page = 1, limit = 10, search, course, semester,
-      gender, enrollmentYear, sortBy = 'createdAt', sortOrder = 'desc',
-      minScore, maxScore, export: exportFormat
+      page = 1,
+      limit = 10,
+      search,
+      course,
+      semester,
+      gender,
+      enrollmentYear,
+      sort = '-createdAt',
     } = req.query;
 
-    const query = {};
+    const pageNum = Math.max(1, parseInt(page));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
+    const skip = (pageNum - 1) * limitNum;
+
+    const filter = {};
 
     if (search) {
-      query.$or = [
+      filter.$or = [
         { name: { $regex: search, $options: 'i' } },
         { studentId: { $regex: search, $options: 'i' } },
         { email: { $regex: search, $options: 'i' } },
       ];
     }
-    if (course) query.course = course;
-    if (semester) query.semester = parseInt(semester);
-    if (gender) query.gender = gender;
-    if (enrollmentYear) query.enrollmentYear = parseInt(enrollmentYear);
 
-    const sortObj = {};
-    sortObj[sortBy] = sortOrder === 'asc' ? 1 : -1;
+    if (course) filter.course = course;
+    if (semester) filter.semester = parseInt(semester);
+    if (gender) filter.gender = gender;
+    if (enrollmentYear) filter.enrollmentYear = parseInt(enrollmentYear);
 
-    const students = await Student.find(query)
-      .limit(parseInt(limit))
-      .skip((parseInt(page) - 1) * parseInt(limit))
-      .sort(sortObj);
+    const allowedSorts = ['name', '-name', 'createdAt', '-createdAt', 'studentId', '-studentId', 'semester', '-semester'];
+    const sortField = allowedSorts.includes(sort) ? sort : '-createdAt';
 
-    const total = await Student.countDocuments(query);
+    const [students, total] = await Promise.all([
+      Student.find(filter).sort(sortField).skip(skip).limit(limitNum).lean(),
+      Student.countDocuments(filter),
+    ]);
+
+    const totalPages = Math.ceil(total / limitNum);
 
     res.json({
-      students,
-      pagination: {
-        total,
-        page: parseInt(page),
-        limit: parseInt(limit),
-        pages: Math.ceil(total / parseInt(limit)),
-        hasNext: parseInt(page) < Math.ceil(total / parseInt(limit)),
-        hasPrev: parseInt(page) > 1,
+      success: true,
+      message: 'Students retrieved successfully',
+      data: {
+        students,
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total,
+          totalPages,
+          hasNextPage: pageNum < totalPages,
+          hasPrevPage: pageNum > 1,
+        },
       },
     });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error' });
+  } catch (error) {
+    next(error);
   }
 };
 
-exports.getStudentById = async (req, res) => {
+exports.getStudent = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    let student;
-    if (mongoose.Types.ObjectId.isValid(id)) {
-      student = await Student.findById(id);
-    }
+    const student = await Student.findOne({
+      $or: [{ _id: id }, { studentId: id }],
+    }).lean();
+
     if (!student) {
-      student = await Student.findOne({ studentId: id });
+      throw new AppError('Student not found', 404);
     }
+
+    const performances = await Performance.find({ student: student._id })
+      .sort('-createdAt')
+      .lean();
+
+    res.json({
+      success: true,
+      data: {
+        student,
+        performances,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.createStudent = async (req, res, next) => {
+  try {
+    const student = await Student.create(req.body);
+
+    res.status(201).json({
+      success: true,
+      message: 'Student created successfully',
+      data: { student },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.updateStudent = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const student = await Student.findByIdAndUpdate(id, req.body, {
+      new: true,
+      runValidators: true,
+    });
+
     if (!student) {
-      return res.status(404).json({ message: 'Student not found' });
+      throw new AppError('Student not found', 404);
     }
-    res.json(student);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error' });
+
+    res.json({
+      success: true,
+      message: 'Student updated successfully',
+      data: { student },
+    });
+  } catch (error) {
+    next(error);
   }
 };
 
-exports.createStudent = async (req, res) => {
+exports.deleteStudent = async (req, res, next) => {
   try {
-    const existingStudentId = await Student.findOne({ studentId: req.body.studentId });
-    if (existingStudentId) {
-      return res.status(400).json({ message: 'Student ID already exists' });
+    const { id } = req.params;
+
+    const student = await Student.findByIdAndDelete(id);
+    if (!student) {
+      throw new AppError('Student not found', 404);
     }
 
-    const existingEmail = await Student.findOne({ email: req.body.email });
-    if (existingEmail) {
-      return res.status(400).json({ message: 'Email already exists' });
-    }
+    await Performance.deleteMany({ student: id });
 
-    const student = new Student(req.body);
-    await student.save();
-    res.status(201).json(student);
-  } catch (err) {
-    console.error(err);
-    if (err.name === 'ValidationError') {
-      const messages = Object.values(err.errors).map(e => e.message);
-      return res.status(400).json({ message: 'Validation failed', errors: messages });
-    }
-    if (err.code === 11000) {
-      return res.status(400).json({ message: 'Duplicate field value' });
-    }
-    res.status(500).json({ message: 'Server error' });
+    res.json({
+      success: true,
+      message: 'Student deleted successfully',
+      data: {},
+    });
+  } catch (error) {
+    next(error);
   }
 };
 
-exports.updateStudent = async (req, res) => {
+exports.getFilterOptions = async (req, res, next) => {
   try {
-    const student = await Student.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
-    if (!student) return res.status(404).json({ message: 'Student not found' });
-    res.json(student);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
+    const [courses, semesters, genders, years] = await Promise.all([
+      Student.distinct('course'),
+      Student.distinct('semester'),
+      Student.distinct('gender'),
+      Student.distinct('enrollmentYear'),
+    ]);
 
-exports.deleteStudent = async (req, res) => {
-  try {
-    const student = await Student.findByIdAndDelete(req.params.id);
-    if (!student) return res.status(404).json({ message: 'Student not found' });
-    await Performance.deleteMany({ student: req.params.id });
-    res.json({ message: 'Student removed' });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error' });
+    res.json({
+      success: true,
+      data: {
+        courses: courses.sort(),
+        semesters: semesters.sort((a, b) => a - b),
+        genders: genders.sort(),
+        enrollmentYears: years.sort((a, b) => b - a),
+      },
+    });
+  } catch (error) {
+    next(error);
   }
 };

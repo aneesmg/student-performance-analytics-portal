@@ -1,34 +1,31 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { MailIcon, LockIcon, EyeIcon, EyeOffIcon, LoginIcon, SchoolIcon } from '../components/Icons';
-import './Login.css';
 
-const Login = () => {
+function Login() {
+  const { login } = useAuth();
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [remember, setRemember] = useState(false);
-  const { login } = useAuth();
-  const navigate = useNavigate();
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+    setError('');
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
     if (!form.email || !form.password) {
       setError('Please fill in all fields');
       return;
     }
     setLoading(true);
+    setError('');
     try {
-      const data = await login(form.email, form.password);
-      const role = data.user.role;
-      navigate(`/${role}/dashboard`);
+      await login(form.email, form.password);
     } catch (err) {
-      setError(err.response?.data?.message || 'Invalid email or password');
+      setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
@@ -36,89 +33,76 @@ const Login = () => {
 
   return (
     <div className="auth-page">
-      <div className="auth-container">
-        <div className="auth-card">
-          <div className="auth-header">
-            <div className="auth-logo">
-              <SchoolIcon size={36} color="#00bcd4" />
-            </div>
-            <h1>Sign In</h1>
-            <p>Welcome back to Student Performance Analytics Portal</p>
-          </div>
-
-          {error && (
-            <div className="auth-alert error">
-              <span className="auth-alert-icon">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c62828" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
-                </svg>
-              </span>
-              {error}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="auth-form">
-            <div className="form-group">
-              <label>Email Address</label>
-              <div className="input-wrapper">
-                <MailIcon size={18} color="#9e9e9e" />
-                <input type="email" name="email" value={form.email} onChange={handleChange} placeholder="Enter your email" />
-              </div>
-            </div>
-            <div className="form-group">
-              <label>Password</label>
-              <div className="input-wrapper">
-                <LockIcon size={18} color="#9e9e9e" />
-                <input type={showPassword ? 'text' : 'password'} name="password" value={form.password} onChange={handleChange} placeholder="Enter your password" />
-                <button type="button" className="input-suffix" onClick={() => setShowPassword(!showPassword)} tabIndex={-1}>
-                  {showPassword ? <EyeOffIcon size={18} color="#9e9e9e" /> : <EyeIcon size={18} color="#9e9e9e" />}
-                </button>
-              </div>
-            </div>
-            <div className="form-options">
-              <label className="checkbox-label">
-                <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
-                <span>Remember me</span>
-              </label>
-              <Link to="/forgot-password" className="forgot-link">Forgot Password?</Link>
-            </div>
-            <button type="submit" className="btn btn-primary auth-btn" disabled={loading}>
-              {loading ? (
-                <span className="btn-spinner" />
-              ) : (
-                <><LoginIcon size={18} color="#fff" /> Sign In</>
-              )}
-            </button>
-          </form>
-
-          <div className="auth-divider">
-            <span className="auth-divider-line" />
-            <span className="auth-divider-text">or continue with</span>
-            <span className="auth-divider-line" />
-          </div>
-
-          <div className="auth-role-hints">
-            <div className="role-hint">
-              <span className="role-hint-dot" style={{ background: '#2e7d32' }} />
-              <span>Student - View grades and progress</span>
-            </div>
-            <div className="role-hint">
-              <span className="role-hint-dot" style={{ background: '#1565c0' }} />
-              <span>Teacher - Manage courses and students</span>
-            </div>
-            <div className="role-hint">
-              <span className="role-hint-dot" style={{ background: '#6a1b9a' }} />
-              <span>Admin - Full system management</span>
-            </div>
-          </div>
-
-          <div className="auth-footer">
-            Don't have an account? <Link to="/register" className="auth-link">Create Account</Link>
-          </div>
+      <div className="auth-card">
+        <div className="auth-header">
+          <h1 className="auth-logo">SPAP</h1>
+          <h2>Welcome Back</h2>
+          <p>Sign in to your account</p>
         </div>
+
+        <form className="auth-form" onSubmit={handleSubmit} noValidate>
+          {error && <div className="form-error-banner">{error}</div>}
+
+          <div className="form-group">
+            <label htmlFor="email">Email Address</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              className="form-input"
+              placeholder="you@example.com"
+              value={form.email}
+              onChange={handleChange}
+              autoComplete="email"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="password">Password</label>
+            <div className="password-wrapper">
+              <input
+                id="password"
+                name="password"
+                type={showPassword ? 'text' : 'password'}
+                className="form-input"
+                placeholder="Enter your password"
+                value={form.password}
+                onChange={handleChange}
+                autoComplete="current-password"
+                required
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? 'Hide' : 'Show'}
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" className="btn btn-primary btn-block" disabled={loading}>
+            {loading ? 'Signing in...' : 'Sign In'}
+          </button>
+        </form>
+
+        <div className="auth-divider">
+          <span>Demo Credentials</span>
+        </div>
+        <div className="demo-credentials">
+          <div><strong>Admin:</strong> admin@spap.com / admin123</div>
+          <div><strong>Teacher:</strong> teacher@spap.com / teacher123</div>
+          <div><strong>Student:</strong> student@spap.com / student123</div>
+        </div>
+
+        <p className="auth-footer-text">
+          Don't have an account? <Link to="/register">Register here</Link>
+        </p>
       </div>
     </div>
   );
-};
+}
 
 export default Login;

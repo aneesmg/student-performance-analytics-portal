@@ -1,123 +1,119 @@
-﻿const User = require('../models/User');
 const jwt = require('jsonwebtoken');
-const crypto = require('crypto');
-const config = require('../config');
+const User = require('../models/User');
+const { AppError } = require('../middleware/errorHandler');
 
-exports.register = async (req, res) => {
+const generateToken = (user) => {
+  return jwt.sign(
+    { id: user._id, role: user.role },
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRE || '30d' }
+  );
+};
+
+exports.register = async (req, res, next) => {
   try {
     const { name, email, password, role } = req.body;
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ message: 'User already exists with this email' });
+      throw new AppError('Email already registered. Please login.', 400);
     }
 
-    const user = new User({ name, email, password, role: role || 'student' });
-    await user.save();
+    if (password && password.length < 6) {
+      throw new AppError('Password must be at least 6 characters', 400);
+    }
 
-    const payload = { id: user._id, role: user.role, name: user.name };
-    const token = jwt.sign(payload, config.JWT_SECRET, { expiresIn: config.JWT_EXPIRE });
+    const user = await User.create({ name, email, password, role: role || 'student' });
+    const token = generateToken(user);
 
     res.status(201).json({
-      token,
-      user: { id: user._id, name, email, role: user.role },
+      success: true,
+      message: 'Registration successful',
+      data: {
+        user: user.toJSON(),
+        token,
+      },
     });
-  } catch (err) {
-    console.error('Register error:', err);
-    if (err.code === 11000) {
-      return res.status(400).json({ message: 'Duplicate field value' });
-    }
-    res.status(500).json({ message: 'Server error during registration' });
+  } catch (error) {
+    next(error);
   }
 };
 
-exports.login = async (req, res) => {
+exports.login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email });
+    if (!email || !password) {
+      throw new AppError('Please provide email and password', 400);
+    }
+
+    const user = await User.findOne({ email }).select('+password');
     if (!user) {
-      return res.status(400).json({ message: 'Invalid email or password' });
+      throw new AppError('Invalid email or password', 401);
+    }
+
+    if (!user.isActive) {
+      throw new AppError('Account has been deactivated. Contact admin.', 401);
     }
 
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid email or password' });
+      throw new AppError('Invalid email or password', 401);
     }
 
-    const payload = { id: user._id, role: user.role, name: user.name };
-    const token = jwt.sign(payload, config.JWT_SECRET, { expiresIn: config.JWT_EXPIRE });
-
-    res.json({
-      token,
-      user: { id: user._id, name: user.name, email: user.email, role: user.role },
-    });
-  } catch (err) {
-    console.error('Login error:', err);
-    res.status(500).json({ message: 'Server error during login' });
-  }
-};
-
-exports.forgotPassword = async (req, res) => {
-  try {
-    const { email } = req.body;
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ message: 'No account with that email exists' });
-    }
-
-    const resetToken = crypto.randomBytes(20).toString('hex');
-    user.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
-    user.resetPasswordExpire = Date.now() + 30 * 60 * 1000;
+    user.lastLogin = new Date();
     await user.save();
 
+    const token = generateToken(user);
+
     res.json({
-      message: 'Password reset link sent to email',
-      resetToken,
-      resetUrl: `${req.protocol}://${req.get('host')}/api/auth/reset-password/${resetToken}`,
+      success: true,
+      message: 'Login successful',
+      data: {
+        user: user.toJSON(),
+        token,
+      },
     });
-  } catch (err) {
-    console.error('Forgot password error:', err);
-    res.status(500).json({ message: 'Server error processing request' });
+  } catch (error) {
+    next(error);
   }
 };
 
-exports.resetPassword = async (req, res) => {
+exports.getMe = async (req, res, next) => {
   try {
-    const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
-    const user = await User.findOne({
-      resetPasswordToken: hashedToken,
-      resetPasswordExpire: { $gt: Date.now() },
-    });
-
+    const user = await User.findById(req.user._id);
     if (!user) {
-      return res.status(400).json({ message: 'Invalid or expired token' });
+      throw new AppError('User not found', 404);
     }
 
-    user.password = req.body.password;
-    user.resetPasswordToken = undefined;
-    user.resetPasswordExpire = undefined;
-    await user.save();
-
-    const payload = { id: user._id, role: user.role, name: user.name };
-    const token = jwt.sign(payload, config.JWT_SECRET, { expiresIn: config.JWT_EXPIRE });
-
-    res.json({ message: 'Password reset successful', token, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
-  } catch (err) {
-    console.error('Reset password error:', err);
-    res.status(500).json({ message: 'Server error resetting password' });
+    res.json({
+      success: true,
+      data: { user: user.toJSON() },
+    });
+  } catch (error) {
+    next(error);
   }
 };
 
-exports.getMe = async (req, res) => {
+exports.updateProfile = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user.id).select('-password');
+    const { name, avatar } = req.body;
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { ...(name && { name }), ...(avatar && { avatar }) },
+      { new: true, runValidators: true }
+    );
+
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      throw new AppError('User not found', 404);
     }
-    res.json(user);
-  } catch (err) {
-    console.error('Get profile error:', err);
-    res.status(500).json({ message: 'Server error fetching profile' });
+
+    res.json({
+      success: true,
+      message: 'Profile updated successfully',
+      data: { user: user.toJSON() },
+    });
+  } catch (error) {
+    next(error);
   }
 };

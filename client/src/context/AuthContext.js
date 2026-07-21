@@ -1,80 +1,72 @@
-import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { authAPI } from '../services/api';
 
 const AuthContext = createContext(null);
 
-export const useAuth = () => useContext(AuthContext);
-
-export const AuthProvider = ({ children }) => {
+export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    const savedUser = localStorage.getItem('user');
-    if (token && savedUser) {
-      setUser(JSON.parse(savedUser));
+  const loadUser = useCallback(async () => {
+    const token = localStorage.getItem('spap_token');
+    if (!token) {
+      setLoading(false);
+      return;
     }
-    setLoading(false);
+    try {
+      const res = await authAPI.getMe();
+      setUser(res.data.data.user);
+    } catch {
+      localStorage.removeItem('spap_token');
+      localStorage.removeItem('spap_user');
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const login = useCallback(async (email, password) => {
+  useEffect(() => {
+    loadUser();
+  }, [loadUser]);
+
+  const login = async (email, password) => {
     const res = await authAPI.login({ email, password });
-    localStorage.setItem('token', res.data.token);
-    localStorage.setItem('user', JSON.stringify(res.data.user));
-    setUser(res.data.user);
-    return res.data;
-  }, []);
-
-  const register = useCallback(async (name, email, password, role) => {
-    const res = await authAPI.register({ name, email, password, role });
-    localStorage.setItem('token', res.data.token);
-    localStorage.setItem('user', JSON.stringify(res.data.user));
-    setUser(res.data.user);
-    return res.data;
-  }, []);
-
-  const logout = useCallback(() => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setUser(null);
-  }, []);
-
-  const hasRole = useCallback((...roles) => {
-    return user && roles.includes(user.role);
-  }, [user]);
-
-  const isStudent = user?.role === 'student';
-  const isTeacher = user?.role === 'teacher';
-  const isAdmin = user?.role === 'admin';
-
-  const getDashboardRoute = () => {
-    if (!user) return '/login';
-    return `/${user.role}/dashboard`;
+    const { user: userData, token } = res.data.data;
+    localStorage.setItem('spap_token', token);
+    localStorage.setItem('spap_user', JSON.stringify(userData));
+    setUser(userData);
+    return userData;
   };
 
-  const updateUser = useCallback((updatedUser) => {
-    localStorage.setItem('user', JSON.stringify(updatedUser));
-    setUser(updatedUser);
-  }, []);
+  const register = async (data) => {
+    const res = await authAPI.register(data);
+    const { user: userData, token } = res.data.data;
+    localStorage.setItem('spap_token', token);
+    localStorage.setItem('spap_user', JSON.stringify(userData));
+    setUser(userData);
+    return userData;
+  };
 
-  const value = {
-    user,
-    loading,
-    login,
-    register,
-    logout,
-    updateUser,
-    hasRole,
-    isStudent,
-    isTeacher,
-    isAdmin,
-    getDashboardRoute,
+  const logout = () => {
+    localStorage.removeItem('spap_token');
+    localStorage.removeItem('spap_user');
+    setUser(null);
+  };
+
+  const updateUser = (userData) => {
+    setUser(userData);
+    localStorage.setItem('spap_user', JSON.stringify(userData));
   };
 
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
+}
+
+export const useAuth = () => {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
+  return ctx;
 };

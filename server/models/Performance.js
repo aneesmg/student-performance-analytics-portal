@@ -1,40 +1,86 @@
-﻿const mongoose = require('mongoose');
+const mongoose = require('mongoose');
 
 const performanceSchema = new mongoose.Schema({
-  student: { type: mongoose.Schema.Types.ObjectId, ref: 'Student', required: true },
-  course: { type: String, required: true },
-  semester: { type: Number, required: true },
-  academicYear: { type: String, required: true },
-  attendance: { type: Number, min: 0, max: 100, default: 0 },
-  assignmentScore: { type: Number, min: 0, max: 100, default: 0 },
-  quizScore: { type: Number, min: 0, max: 100, default: 0 },
-  midExamScore: { type: Number, min: 0, max: 100, default: 0 },
-  finalExamScore: { type: Number, min: 0, max: 100, default: 0 },
-  overallPercentage: { type: Number, min: 0, max: 100, default: 0 },
-  grade: { type: String, enum: ['A+', 'A', 'B+', 'B', 'C+', 'C', 'D', 'F'], default: 'C' },
-  remarks: { type: String, trim: true },
-}, { timestamps: true });
-
-// Calculate overall percentage and grade before saving
-performanceSchema.pre('save', function(next) {
-  this.overallPercentage = (
-    (this.attendance * 0.1) +
-    (this.assignmentScore * 0.2) +
-    (this.quizScore * 0.15) +
-    (this.midExamScore * 0.25) +
-    (this.finalExamScore * 0.3)
-  );
-
-  if (this.overallPercentage >= 90) this.grade = 'A+';
-  else if (this.overallPercentage >= 80) this.grade = 'A';
-  else if (this.overallPercentage >= 70) this.grade = 'B+';
-  else if (this.overallPercentage >= 60) this.grade = 'B';
-  else if (this.overallPercentage >= 50) this.grade = 'C+';
-  else if (this.overallPercentage >= 40) this.grade = 'C';
-  else if (this.overallPercentage >= 33) this.grade = 'D';
-  else this.grade = 'F';
-
-  next();
+  student: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Student',
+    required: [true, 'Student reference is required'],
+  },
+  course: {
+    type: String,
+    required: [true, 'Course name is required'],
+    trim: true,
+  },
+  semester: {
+    type: Number,
+    required: [true, 'Semester is required'],
+    min: 1,
+    max: 8,
+  },
+  academicYear: {
+    type: String,
+    required: [true, 'Academic year is required'],
+    trim: true,
+  },
+  attendance: {
+    type: Number,
+    required: [true, 'Attendance is required'],
+    min: [0, 'Attendance cannot be negative'],
+    max: [100, 'Attendance cannot exceed 100'],
+  },
+  assignmentScore: {
+    type: Number,
+    required: [true, 'Assignment score is required'],
+    min: [0, 'Score cannot be negative'],
+    max: [100, 'Score cannot exceed 100'],
+  },
+  quizScore: {
+    type: Number,
+    required: [true, 'Quiz score is required'],
+    min: [0, 'Score cannot be negative'],
+    max: [100, 'Score cannot exceed 100'],
+  },
+  midExamScore: {
+    type: Number,
+    required: [true, 'Mid exam score is required'],
+    min: [0, 'Score cannot be negative'],
+    max: [100, 'Score cannot exceed 100'],
+  },
+  finalExamScore: {
+    type: Number,
+    required: [true, 'Final exam score is required'],
+    min: [0, 'Score cannot be negative'],
+    max: [100, 'Score cannot exceed 100'],
+  },
+  overallPercentage: {
+    type: Number,
+    required: true,
+    min: 0,
+    max: 100,
+  },
+  grade: {
+    type: String,
+    required: [true, 'Grade is required'],
+    enum: ['A+', 'A', 'B+', 'B', 'C+', 'C', 'D', 'F'],
+  },
+  remarks: {
+    type: String,
+    trim: true,
+    default: '',
+  },
+  status: {
+    type: String,
+    enum: ['pass', 'fail'],
+    default: 'pass',
+  },
+}, {
+  timestamps: true,
 });
+
+performanceSchema.index({ student: 1 });
+performanceSchema.index({ course: 1 });
+performanceSchema.index({ semester: 1 });
+performanceSchema.index({ grade: 1 });
+performanceSchema.index({ overallPercentage: -1 });
 
 module.exports = mongoose.model('Performance', performanceSchema);

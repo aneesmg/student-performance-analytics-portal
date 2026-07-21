@@ -1,11 +1,21 @@
-﻿module.exports = function(...roles) {
+const roleAuth = (...roles) => {
   return (req, res, next) => {
     if (!req.user) {
-      return res.status(401).json({ message: 'Not authenticated' });
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required.',
+      });
     }
+
     if (!roles.includes(req.user.role)) {
-      return res.status(403).json({ message: `Role '${req.user.role}' is not authorized` });
+      return res.status(403).json({
+        success: false,
+        message: `Access denied. Role '${req.user.role}' is not authorized. Required: ${roles.join(', ')}`,
+      });
     }
+
     next();
   };
 };
+
+module.exports = roleAuth;

@@ -1,23 +1,34 @@
-﻿const router = require('express').Router();
+const express = require('express');
+const { body } = require('express-validator');
+const router = express.Router();
 const auth = require('../middleware/auth');
 const roleAuth = require('../middleware/roleAuth');
-const validate = require('../middleware/validate');
-const { body } = require('express-validator');
-const studentController = require('../controllers/studentController');
+const { validate } = require('../middleware/validate');
+const {
+  getStudents, getStudent, createStudent, updateStudent, deleteStudent, getFilterOptions,
+} = require('../controllers/studentController');
 
-router.get('/', auth, studentController.getAllStudents);
-router.get('/:id', auth, studentController.getStudentById);
+const studentValidation = [
+  body('studentId').trim().notEmpty().withMessage('Student ID is required'),
+  body('name').trim().notEmpty().withMessage('Name is required'),
+  body('email').isEmail().withMessage('Please provide a valid email'),
+  body('dateOfBirth').isISO8601().withMessage('Valid date of birth is required'),
+  body('gender').isIn(['Male', 'Female', 'Other']).withMessage('Gender must be Male, Female, or Other'),
+  body('course').trim().notEmpty().withMessage('Course/department is required'),
+  body('semester').isInt({ min: 1, max: 8 }).withMessage('Semester must be between 1 and 8'),
+  body('enrollmentYear').isInt({ min: 2000 }).withMessage('Valid enrollment year is required'),
+];
 
-router.post('/', auth, roleAuth('admin', 'teacher'), [
-  body('studentId').notEmpty().withMessage('Student ID is required'),
-  body('name').notEmpty().withMessage('Name is required'),
-  body('email').isEmail().withMessage('Valid email is required'),
-  body('course').notEmpty().withMessage('Course is required'),
-  body('semester').isInt({ min: 1 }).withMessage('Valid semester is required'),
-  body('enrollmentYear').isInt().withMessage('Enrollment year is required'),
-], validate, studentController.createStudent);
+router.get('/filter-options', auth, getFilterOptions);
 
-router.put('/:id', auth, roleAuth('admin', 'teacher'), studentController.updateStudent);
-router.delete('/:id', auth, roleAuth('admin'), studentController.deleteStudent);
+router.get('/', auth, getStudents);
+
+router.get('/:id', auth, getStudent);
+
+router.post('/', auth, roleAuth('admin', 'teacher'), studentValidation, validate, createStudent);
+
+router.put('/:id', auth, roleAuth('admin', 'teacher'), updateStudent);
+
+router.delete('/:id', auth, roleAuth('admin'), deleteStudent);
 
 module.exports = router;

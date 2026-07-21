@@ -1,0 +1,19 @@
+.dashboard-page {
+  animation: slideUp 0.4s ease;
+}
+
+.dashboard-page .page-header {
+  margin-bottom: 28px;
+}
+
+.btn-export {
+  background: var(--success);
+  color: #fff;
+  border-color: var(--success);
+}
+.btn-export:hover:not(:disabled) {
+  background: #1b5e20;
+  border-color: #1b5e20;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}

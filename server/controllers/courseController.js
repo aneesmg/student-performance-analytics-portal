@@ -1,69 +1,131 @@
-﻿const Course = require('../models/Course');
+const Course = require('../models/Course');
+const { AppError } = require('../middleware/errorHandler');
 
-exports.getAllCourses = async (req, res) => {
+exports.getCourses = async (req, res, next) => {
   try {
-    const { page = 1, limit = 20, department } = req.query;
-    const query = {};
-    if (department) query.department = department;
+    const { page = 1, limit = 20, search, department, sort = 'courseName' } = req.query;
 
-    const courses = await Course.find(query)
-      .limit(parseInt(limit))
-      .skip((parseInt(page) - 1) * parseInt(limit))
-      .sort({ courseCode: 1 });
+    const pageNum = Math.max(1, parseInt(page));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
+    const skip = (pageNum - 1) * limitNum;
 
-    const total = await Course.countDocuments(query);
+    const filter = {};
+    if (search) {
+      filter.$or = [
+        { courseName: { $regex: search, $options: 'i' } },
+        { courseCode: { $regex: search, $options: 'i' } },
+      ];
+    }
+    if (department) filter.department = department;
 
-    res.json({ courses, total, page: parseInt(page), pages: Math.ceil(total / parseInt(limit)) });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error' });
+    const allowedSorts = ['courseName', '-courseName', 'department', '-department', 'credits', '-credits'];
+    const sortField = allowedSorts.includes(sort) ? sort : 'courseName';
+
+    const [courses, total] = await Promise.all([
+      Course.find(filter).sort(sortField).skip(skip).limit(limitNum).lean(),
+      Course.countDocuments(filter),
+    ]);
+
+    const totalPages = Math.ceil(total / limitNum);
+
+    res.json({
+      success: true,
+      data: {
+        courses,
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total,
+          totalPages,
+          hasNextPage: pageNum < totalPages,
+          hasPrevPage: pageNum > 1,
+        },
+      },
+    });
+  } catch (error) {
+    next(error);
   }
 };
 
-exports.getCourseById = async (req, res) => {
+exports.getCourse = async (req, res, next) => {
   try {
-    const course = await Course.findById(req.params.id);
-    if (!course) return res.status(404).json({ message: 'Course not found' });
-    res.json(course);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error' });
+    const course = await Course.findOne({
+      $or: [{ _id: req.params.id }, { courseCode: req.params.id }],
+    }).lean();
+
+    if (!course) {
+      throw new AppError('Course not found', 404);
+    }
+
+    res.json({
+      success: true,
+      data: { course },
+    });
+  } catch (error) {
+    next(error);
   }
 };
 
-exports.createCourse = async (req, res) => {
+exports.createCourse = async (req, res, next) => {
   try {
-    const existing = await Course.findOne({ courseCode: req.body.courseCode });
-    if (existing) return res.status(400).json({ message: 'Course code already exists' });
+    const course = await Course.create(req.body);
 
-    const course = new Course(req.body);
-    await course.save();
-    res.status(201).json(course);
-  } catch (err) {
-    console.error(err);
-    if (err.code === 11000) return res.status(400).json({ message: 'Duplicate course code' });
-    res.status(500).json({ message: 'Server error' });
+    res.status(201).json({
+      success: true,
+      message: 'Course created successfully',
+      data: { course },
+    });
+  } catch (error) {
+    next(error);
   }
 };
 
-exports.updateCourse = async (req, res) => {
+exports.updateCourse = async (req, res, next) => {
   try {
-    const course = await Course.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
-    if (!course) return res.status(404).json({ message: 'Course not found' });
-    res.json(course);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error' });
+    const course = await Course.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!course) {
+      throw new AppError('Course not found', 404);
+    }
+
+    res.json({
+      success: true,
+      message: 'Course updated successfully',
+      data: { course },
+    });
+  } catch (error) {
+    next(error);
   }
 };
 
-exports.deleteCourse = async (req, res) => {
+exports.deleteCourse = async (req, res, next) => {
   try {
     const course = await Course.findByIdAndDelete(req.params.id);
-    if (!course) return res.status(404).json({ message: 'Course not found' });
-    res.json({ message: 'Course deleted successfully' });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error' });
+    if (!course) {
+      throw new AppError('Course not found', 404);
+    }
+
+    res.json({
+      success: true,
+      message: 'Course deleted successfully',
+      data: {},
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.getDepartments = async (req, res, next) => {
+  try {
+    const departments = await Course.distinct('department');
+    res.json({
+      success: true,
+      data: { departments: departments.sort() },
+    });
+  } catch (error) {
+    next(error);
   }
 };

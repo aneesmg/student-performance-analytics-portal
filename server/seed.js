@@ -1,67 +1,207 @@
-const mongoose = require('mongoose');
-const config = require('./config');
+﻿const mongoose = require('mongoose');
+const dotenv = require('dotenv');
+const bcrypt = require('bcryptjs');
+
+dotenv.config();
+
 const User = require('./models/User');
 const Student = require('./models/Student');
-const Course = require('./models/Course');
 const Performance = require('./models/Performance');
+const Course = require('./models/Course');
 
-const seed = async () => {
-  try {
-    await mongoose.connect(config.MONGODB_URI);
-    console.log('Connected to MongoDB');
+const departments = ['Computer Science', 'Mathematics', 'Physics', 'Chemistry', 'Biology', 'Engineering'];
+const courseNames = {
+  'Computer Science': ['Data Structures', 'Algorithms', 'Database Systems', 'Operating Systems', 'Networks', 'AI', 'Web Development', 'Software Engineering'],
+  'Mathematics': ['Calculus I', 'Calculus II', 'Linear Algebra', 'Statistics', 'Discrete Math', 'Numerical Methods'],
+  'Physics': ['Mechanics', 'Electromagnetism', 'Quantum Physics', 'Thermodynamics', 'Optics'],
+  'Chemistry': ['Organic Chemistry', 'Inorganic Chemistry', 'Physical Chemistry', 'Analytical Chemistry'],
+  'Biology': ['Cell Biology', 'Genetics', 'Ecology', 'Microbiology', 'Molecular Biology'],
+  'Engineering': ['Circuit Analysis', 'Thermodynamics', 'Fluid Mechanics', 'Materials Science', 'Control Systems'],
+};
 
-    await User.deleteMany({});
-    await Student.deleteMany({});
-    await Course.deleteMany({});
-    await Performance.deleteMany({});
-    console.log('Cleared existing data');
+const firstNames = ['Muhammad', 'Ahmed', 'Ali', 'Hassan', 'Husain', 'Omar', 'Usman', 'Bilal', 'Tariq', 'Farhan',
+  'Imran', 'Junaid', 'Nabeel', 'Faisal', 'Zubair', 'Waqar', 'Adil', 'Rashid', 'Tahir', 'Asif',
+  'Sohail', 'Nadeem', 'Iqbal', 'Akram', 'Sufyan', 'Hamza', 'Zayan', 'Ayaan', 'Rayan', 'Ibrahim',
+  'Fatima', 'Ayesha', 'Zainab', 'Khadija', 'Sana', 'Amna', 'Rabia', 'Sadia', 'Saima', 'Shazia',
+  'Nadia', 'Parveen', 'Shahida', 'Yasmin', 'Nasreen', 'Anila', 'Shaista', 'Farzana', 'Ruqayya', 'Shamim'];
 
-    const admin = await User.create({ name: 'Admin User', email: 'admin@spap.com', password: 'admin123', role: 'admin' });
-    const teacher = await User.create({ name: 'Teacher User', email: 'teacher@spap.com', password: 'teacher123', role: 'teacher' });
-    const studentUser = await User.create({ name: 'Student User', email: 'student@spap.com', password: 'student123', role: 'student' });
-    console.log('Users created');
+const lastNames = ['Khan', 'Ahmed', 'Ali', 'Hussain', 'Sheikh', 'Malik', 'Siddiqui', 'Iqbal',
+  'Butt', 'Chaudhry', 'Qureshi', 'Hashmi', 'Rizvi', 'Syed', 'Baig', 'Mirza',
+  'Usmani', 'Raja', 'Arain', 'Khattak', 'Durrani', 'Memon', 'Pirzada', 'Shah',
+  'Rana', 'Ansari', 'Gill', 'Jatoi', 'Leghari', 'Gujjar'];
 
-    const student = await Student.create({
-      studentId: 'STU001',
-      name: 'Student User',
-      email: 'student@spap.com',
-      course: 'Computer Science',
-      semester: 3,
-      enrollmentYear: 2025,
-      gender: 'Male',
-      phone: '+1-555-0100',
-    });
-    console.log('Student profile created');
+const grades = ['A+', 'A', 'B+', 'B', 'C+', 'C', 'D', 'F'];
+const remarks = ['Excellent performance', 'Good effort', 'Needs improvement', 'Consistent work', 'Shows potential', 'Average performance', 'Outstanding achievement'];
 
-    const courses = await Course.create([
-      { courseCode: 'CS201', courseName: 'Data Structures', credits: 4, department: 'Computer Science', instructor: 'Teacher User', semester: 3 },
-      { courseCode: 'CS202', courseName: 'Algorithms', credits: 4, department: 'Computer Science', instructor: 'Teacher User', semester: 3 },
-      { courseCode: 'CS203', courseName: 'Database Systems', credits: 3, department: 'Computer Science', instructor: 'Teacher User', semester: 3 },
-      { courseCode: 'CS204', courseName: 'Computer Networks', credits: 3, department: 'Computer Science', instructor: 'Teacher User', semester: 3 },
-      { courseCode: 'CS205', courseName: 'Operating Systems', credits: 4, department: 'Computer Science', instructor: 'Teacher User', semester: 3 },
-    ]);
-    console.log('Courses created');
+const generateStudentId = (index) => `STU${String(2026000 + index).padStart(4, '0')}`;
 
-    const performanceData = [
-      { student: student._id, course: 'Data Structures', semester: 3, academicYear: '2025', attendance: 92, assignmentScore: 85, quizScore: 88, midExamScore: 80, finalExamScore: 90 },
-      { student: student._id, course: 'Algorithms', semester: 3, academicYear: '2025', attendance: 85, assignmentScore: 72, quizScore: 75, midExamScore: 78, finalExamScore: 76 },
-      { student: student._id, course: 'Database Systems', semester: 3, academicYear: '2025', attendance: 96, assignmentScore: 90, quizScore: 92, midExamScore: 94, finalExamScore: 95 },
-      { student: student._id, course: 'Computer Networks', semester: 3, academicYear: '2025', attendance: 78, assignmentScore: 70, quizScore: 72, midExamScore: 68, finalExamScore: 74 },
-      { student: student._id, course: 'Operating Systems', semester: 3, academicYear: '2025', attendance: 88, assignmentScore: 80, quizScore: 82, midExamScore: 84, finalExamScore: 85 },
-    ];
-    await Performance.create(performanceData);
-    console.log('Performance records created');
+const randomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+const randomFloat = (min, max) => parseFloat((Math.random() * (max - min) + min).toFixed(1));
+const randomItem = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
-    console.log('\nSeed complete! Default accounts:');
-    console.log('  Admin:   admin@spap.com / admin123');
-    console.log('  Teacher: teacher@spap.com / teacher123');
-    console.log('  Student: student@spap.com / student123');
+const calculateGrade = (pct) => {
+  if (pct >= 90) return 'A+';
+  if (pct >= 80) return 'A';
+  if (pct >= 70) return 'B+';
+  if (pct >= 60) return 'B';
+  if (pct >= 50) return 'C+';
+  if (pct >= 40) return 'C';
+  if (pct >= 33) return 'D';
+  return 'F';
+};
 
-    process.exit(0);
-  } catch (err) {
-    console.error('Seed error:', err);
-    process.exit(1);
+const calculateOverall = (attendance, assignment, quiz, mid, final) => {
+  return parseFloat((attendance * 0.10 + assignment * 0.20 + quiz * 0.15 + mid * 0.25 + final * 0.30).toFixed(1));
+};
+
+const seedUsers = async () => {
+  console.log('Seeding users...');
+  const users = [
+    { name: 'Muhammad Asif', email: 'admin@spap.com', password: 'admin123', role: 'admin' },
+    { name: 'Fatima Khan', email: 'teacher@spap.com', password: 'teacher123', role: 'teacher' },
+    { name: 'Ali Raza', email: 'student@spap.com', password: 'student123', role: 'student' },
+  ];
+
+  for (const u of users) {
+    const exists = await User.findOne({ email: u.email });
+    if (!exists) {
+      const user = new User(u);
+      await user.save();
+      console.log(`  Created user: ${u.email} (${u.role})`);
+    } else {
+      console.log(`  Already exists: ${u.email}`);
+    }
   }
 };
 
-seed();
+const seedCourses = async () => {
+  console.log('Seeding courses...');
+  let codeIndex = 1;
+  const courses = [];
+
+  for (const [dept, names] of Object.entries(courseNames)) {
+    for (const name of names) {
+      const code = `CS${String(codeIndex).padStart(3, '0')}`;
+      courses.push({
+        courseCode: code,
+        courseName: name,
+        credits: randomInt(2, 4),
+        department: dept,
+        instructor: `${randomItem(firstNames)} ${randomItem(lastNames)}`,
+        semester: randomInt(1, 4),
+        description: `Comprehensive study of ${name.toLowerCase()} covering fundamental to advanced topics.`,
+      });
+      codeIndex++;
+    }
+  }
+
+  for (const c of courses) {
+    const exists = await Course.findOne({ courseCode: c.courseCode });
+    if (!exists) {
+      await Course.create(c);
+    }
+  }
+  console.log(`  Created ${courses.length} courses`);
+};
+
+const seedStudents = async (count = 100) => {
+  console.log(`Seeding ${count} students...`);
+
+  const existingCount = await Student.countDocuments();
+  if (existingCount >= count) {
+    console.log(`  Already have ${existingCount} students, skipping.`);
+    return;
+  }
+
+  const students = [];
+  const performances = [];
+
+  for (let i = 1; i <= count; i++) {
+    const firstName = randomItem(firstNames);
+    const lastName = randomItem(lastNames);
+    const dept = randomItem(departments);
+    const semester = randomInt(1, 4);
+    const year = 2025 + Math.floor((i - 1) / 25);
+
+    const attendance = randomInt(60, 100);
+    const assignmentScore = randomFloat(40, 100);
+    const quizScore = randomFloat(35, 100);
+    const midExamScore = randomFloat(30, 100);
+    const finalExamScore = randomFloat(30, 100);
+    const overall = calculateOverall(attendance, assignmentScore, quizScore, midExamScore, finalExamScore);
+    const grade = calculateGrade(overall);
+
+    students.push({
+      studentId: generateStudentId(i),
+      name: `${firstName} ${lastName}`,
+      email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}${i}@student.edu`,
+      dateOfBirth: new Date(randomInt(1998, 2005), randomInt(0, 11), randomInt(1, 28)),
+      gender: randomItem(['Male', 'Female']),
+      phone: `+1${String(randomInt(2000000000, 9999999999))}`,
+      address: `${randomInt(100, 9999)} ${randomItem(['Main', 'Mall', 'Garden', 'Park', 'Lake'])} St, ${randomItem(['Karachi', 'Lahore', 'Islamabad', 'Rawalpindi', 'Faisalabad', 'Multan', 'Peshawar'])}, Pakistan`,
+      course: dept,
+      semester,
+      enrollmentYear: year,
+      guardianName: `${randomItem(firstNames)} ${lastName}`,
+      guardianPhone: `+1${String(randomInt(2000000000, 9999999999))}`,
+    });
+  }
+
+  const insertedStudents = await Student.insertMany(students);
+  console.log(`  Created ${insertedStudents.length} students`);
+
+  console.log('  Generating performance records...');
+  for (const student of insertedStudents) {
+    const attendance = randomInt(60, 100);
+    const assignmentScore = randomFloat(40, 100);
+    const quizScore = randomFloat(35, 100);
+    const midExamScore = randomFloat(30, 100);
+    const finalExamScore = randomFloat(30, 100);
+    const overall = calculateOverall(attendance, assignmentScore, quizScore, midExamScore, finalExamScore);
+    const grade = calculateGrade(overall);
+
+    performances.push({
+      student: student._id,
+      course: student.course,
+      semester: student.semester,
+      academicYear: `2025-2026`,
+      attendance,
+      assignmentScore,
+      quizScore,
+      midExamScore,
+      finalExamScore,
+      overallPercentage: overall,
+      grade,
+      status: overall >= 33 ? 'pass' : 'fail',
+      remarks: randomItem(remarks),
+    });
+  }
+
+  await Performance.insertMany(performances);
+  console.log(`  Created ${performances.length} performance records`);
+};
+
+const seedAll = async () => {
+  try {
+    console.log('Connecting to MongoDB...');
+    await mongoose.connect(process.env.MONGODB_URI);
+    console.log('Connected.\n');
+
+    await seedUsers();
+    await seedCourses();
+    await seedStudents(100);
+
+    console.log('\nSeed completed successfully!');
+    console.log(`  Users: ${await User.countDocuments()}`);
+    console.log(`  Courses: ${await Course.countDocuments()}`);
+    console.log(`  Students: ${await Student.countDocuments()}`);
+    console.log(`  Performances: ${await Performance.countDocuments()}`);
+  } catch (err) {
+    console.error('Seed failed:', err);
+  } finally {
+    await mongoose.disconnect();
+    process.exit(0);
+  }
+};
+
+seedAll();

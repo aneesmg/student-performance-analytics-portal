@@ -1,117 +1,261 @@
-import React, { useState } from 'react';
-import './Reports.css';
+import React, { useState, useEffect, useCallback } from 'react';
+import { reportAPI } from '../services/api';
+import { BarChart, PieChart } from '../components/Charts';
+import ExportOptions from '../components/ExportOptions';
 
-const Reports = () => {
-  const [reportType, setReportType] = useState('class');
-  const [students] = useState([
-    { id: 'STU001', name: 'Ayesha Khan', attendance: 92, assignment: 88, quiz: 85, mid: 78, final: 90, total: 86.2, grade: 'A' },
-    { id: 'STU002', name: 'Bilal Ahmed', attendance: 85, assignment: 72, quiz: 68, mid: 80, final: 76, total: 75.9, grade: 'B+' },
-    { id: 'STU003', name: 'Hassan Ali', attendance: 78, assignment: 65, quiz: 70, mid: 72, final: 68, total: 70.1, grade: 'B' },
-    { id: 'STU004', name: 'Fatima Hussain', attendance: 95, assignment: 96, quiz: 92, mid: 90, final: 95, total: 93.5, grade: 'A+' },
-    { id: 'STU005', name: 'Sana Malik', attendance: 70, assignment: 60, quiz: 55, mid: 68, final: 62, total: 62.9, grade: 'C+' },
-  ]);
+function Reports() {
+  const [summary, setSummary] = useState(null);
+  const [gradeReport, setGradeReport] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [activeTab, setActiveTab] = useState('overview');
+  const [compareIds, setCompareIds] = useState('');
+  const [comparison, setComparison] = useState(null);
+  const [compareLoading, setCompareLoading] = useState(false);
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const [summaryRes, gradeRes] = await Promise.all([
+        reportAPI.getSummary(),
+        reportAPI.getGradeReport(),
+      ]);
+      setSummary(summaryRes.data.data);
+      setGradeReport(gradeRes.data.data);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to load reports');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  const handleCompare = async () => {
+    if (!compareIds.trim()) return;
+    setCompareLoading(true);
+    try {
+      const res = await reportAPI.compareStudents(compareIds);
+      setComparison(res.data.data.comparison);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Comparison failed');
+    }
+    setCompareLoading(false);
+  };
+
+  if (loading) {
+    return (
+      <div className="page-loading">
+        <div className="spinner"></div>
+        <p>Loading reports...</p>
+      </div>
+    );
+  }
+
+  const gradeChartData = gradeReport?.distribution?.map((g) => ({
+    label: g.grade,
+    value: g.count,
+  })) || [];
 
   return (
-    <div className="reports page">
-      <div className="container">
-        <div className="reports-header">
-          <h1>Performance Report</h1>
-          <p>Comprehensive academic performance analysis and grade reports</p>
+    <div className="page">
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Reports & Analytics</h1>
+          <p className="page-subtitle">Comprehensive performance analysis and exportable reports</p>
         </div>
+        <ExportOptions type="performances" />
+      </div>
 
-        <div className="reports-controls card">
-          <div className="report-filters">
-            <div className="filter-group">
-              <label>Report Type</label>
-              <select value={reportType} onChange={(e) => setReportType(e.target.value)}>
-                <option value="class">Class Report</option>
-                <option value="individual">Individual Report</option>
-                <option value="course">Course Report</option>
-              </select>
+      {error && <div className="form-error-banner">{error}</div>}
+
+      <div className="tabs">
+        <button className={`tab ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')}>Overview</button>
+        <button className={`tab ${activeTab === 'grades' ? 'active' : ''}`} onClick={() => setActiveTab('grades')}>Grade Analysis</button>
+        <button className={`tab ${activeTab === 'compare' ? 'active' : ''}`} onClick={() => setActiveTab('compare')}>Compare Students</button>
+        <button className={`tab ${activeTab === 'subjects' ? 'active' : ''}`} onClick={() => setActiveTab('subjects')}>Subject Performance</button>
+      </div>
+
+      {activeTab === 'overview' && summary && (
+        <div className="report-section">
+          <div className="stats-grid">
+            <div className="stat-card">
+              <div className="stat-info">
+                <p className="stat-label">Total Students</p>
+                <p className="stat-value">{summary.summary?.totalStudents || 0}</p>
+              </div>
             </div>
-            <div className="filter-group">
-              <label>Course</label>
-              <select>
-                <option>All Courses</option>
-                <option>Computer Science</option>
-                <option>Mathematics</option>
-                <option>Physics</option>
-              </select>
+            <div className="stat-card">
+              <div className="stat-info">
+                <p className="stat-label">Average Score</p>
+                <p className="stat-value">{summary.summary?.averageScore || 0}%</p>
+              </div>
             </div>
-            <div className="filter-group">
-              <label>Semester</label>
-              <select>
-                <option>Semester 1</option>
-                <option>Semester 2</option>
-                <option>Semester 3</option>
-                <option>Semester 4</option>
-              </select>
+            <div className="stat-card">
+              <div className="stat-info">
+                <p className="stat-label">Pass Rate</p>
+                <p className="stat-value">{summary.summary?.passRate || 0}%</p>
+              </div>
             </div>
-            <button className="btn btn-primary">Generate Report</button>
+            <div className="stat-card">
+              <div className="stat-info">
+                <p className="stat-label">Records</p>
+                <p className="stat-value">{summary.summary?.totalRecords || 0}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="report-insights">
+            <h3>Key Insights</h3>
+            <ul>
+              {summary.summary?.averageScore < 60 && <li>Average score is below 60% — remedial actions recommended.</li>}
+              {summary.summary?.averageAttendance < 75 && <li>Average attendance is below 75% — attendance programs needed.</li>}
+              {summary.summary?.passRate > 80 && <li>Pass rate is above 80% — overall performance is strong.</li>}
+              {summary.summary?.passRate < 60 && <li>Pass rate is below 60% — urgent intervention required.</li>}
+              <li>Highest score: {summary.summary?.highestScore}% | Lowest score: {summary.summary?.lowestScore}%</li>
+              <li>Total students tracked: {summary.summary?.totalStudents}</li>
+            </ul>
+          </div>
+
+          {summary.subjectPerformances?.length > 0 && (
+            <div className="dashboard-card chart-card" style={{ marginTop: 20 }}>
+              <BarChart
+                data={summary.subjectPerformances.slice(0, 8).map((s) => ({ label: s._id, value: parseFloat(s.avgScore.toFixed(1)) }))}
+                xKey="label"
+                yKey="value"
+                title="Subject Performance Overview"
+                color="#2e7d32"
+              />
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'grades' && gradeReport && (
+        <div className="report-section">
+          <div className="dashboard-grid">
+            <div className="dashboard-card chart-card">
+              <PieChart data={gradeChartData} labelKey="label" valueKey="value" title="Grade Distribution" />
+            </div>
+            <div className="dashboard-card">
+              <h3 className="chart-title">Grade Breakdown</h3>
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Grade</th>
+                    <th>Count</th>
+                    <th>Avg Score</th>
+                    <th>Distribution</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {gradeReport.distribution?.map((g) => (
+                    <tr key={g.grade}>
+                      <td><span className={`grade-badge grade-${g.grade?.toLowerCase()?.replace('+', 'p')}`}>{g.grade}</span></td>
+                      <td>{g.count}</td>
+                      <td>{g.avgScore}%</td>
+                      <td>
+                        <div className="bar-mini">
+                          <div
+                            className="bar-fill"
+                            style={{
+                              width: `${gradeReport.totalStudents > 0 ? (g.count / gradeReport.totalStudents) * 100 : 0}%`,
+                            }}
+                          ></div>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
+      )}
 
-        <div className="report-summary">
-          <div className="card summary-card">
-            <h3>Class Average</h3>
-            <span className="summary-value">77.7%</span>
-            <span className="summary-change up">+4.2%</span>
+      {activeTab === 'compare' && (
+        <div className="report-section">
+          <div className="compare-form">
+            <p className="form-help">Enter student IDs (comma-separated) to compare performance.</p>
+            <div className="compare-input-row">
+              <input
+                type="text"
+                className="form-input"
+                placeholder="e.g., STU2026001, STU2026002"
+                value={compareIds}
+                onChange={(e) => setCompareIds(e.target.value)}
+              />
+              <button className="btn btn-primary" onClick={handleCompare} disabled={compareLoading}>
+                {compareLoading ? 'Loading...' : 'Compare'}
+              </button>
+            </div>
           </div>
-          <div className="card summary-card">
-            <h3>Highest Score</h3>
-            <span className="summary-value">93.5%</span>
-            <span className="summary-label">Fatima Hussain</span>
-          </div>
-          <div className="card summary-card">
-            <h3>Lowest Score</h3>
-            <span className="summary-value">62.9%</span>
-            <span className="summary-label">Sana Malik</span>
-          </div>
-          <div className="card summary-card">
-            <h3>Pass Rate</h3>
-            <span className="summary-value">100%</span>
-            <span className="summary-change up">+1.2%</span>
-          </div>
+
+          {comparison && comparison.length > 0 && (
+            <div className="comparison-results">
+              {comparison.map((c) => (
+                <div key={c.student._id} className="comparison-card">
+                  <h4>{c.student.name}</h4>
+                  <p className="text-muted">{c.student.studentId} &bull; {c.student.course}</p>
+                  <div className="comparison-stats">
+                    <div className="stat-mini">
+                      <span className="stat-mini-label">Avg Score</span>
+                      <span className={`stat-mini-value ${c.averageScore >= 70 ? 'high' : c.averageScore >= 50 ? 'medium' : 'low'}`}>
+                        {c.averageScore}%
+                      </span>
+                    </div>
+                    <div className="stat-mini">
+                      <span className="stat-mini-label">Records</span>
+                      <span className="stat-mini-value">{c.totalRecords}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
+      )}
 
-        <div className="card report-table-card">
-          <h3>Detailed Performance Report</h3>
-          <div className="table-wrapper">
-            <table className="report-table">
+      {activeTab === 'subjects' && summary && (
+        <div className="report-section">
+          <div className="dashboard-card chart-card">
+            <BarChart
+              data={summary.subjectPerformances?.map((s) => ({ label: s._id, value: parseFloat(s.avgScore.toFixed(1)) })) || []}
+              xKey="label"
+              yKey="value"
+              title="All Subjects Performance"
+              color="#1a237e"
+            />
+          </div>
+          <div className="dashboard-card" style={{ marginTop: 20 }}>
+            <table className="data-table">
               <thead>
                 <tr>
-                  <th>Student ID</th>
-                  <th>Name</th>
-                  <th>Attendance</th>
-                  <th>Assignment</th>
-                  <th>Quiz</th>
-                  <th>Mid Exam</th>
-                  <th>Final Exam</th>
-                  <th>Total %</th>
-                  <th>Grade</th>
+                  <th>Subject</th>
+                  <th>Avg Score</th>
+                  <th>Avg Attendance</th>
+                  <th>Students</th>
+                  <th>Pass Count</th>
                 </tr>
               </thead>
               <tbody>
-                {students.map((s, i) => (
-                  <tr key={i}>
-                    <td>{s.id}</td>
-                    <td>{s.name}</td>
-                    <td>{s.attendance}%</td>
-                    <td>{s.assignment}%</td>
-                    <td>{s.quiz}%</td>
-                    <td>{s.mid}%</td>
-                    <td>{s.final}%</td>
-                    <td className="total-cell">{s.total}%</td>
-                    <td><span className={`grade-badge grade-${s.grade[0].toLowerCase()}`}>{s.grade}</span></td>
+                {summary.subjectPerformances?.map((s) => (
+                  <tr key={s._id}>
+                    <td><strong>{s._id}</strong></td>
+                    <td><span className={`score-badge ${s.avgScore >= 70 ? 'high' : s.avgScore >= 50 ? 'medium' : 'low'}`}>{s.avgScore.toFixed(1)}%</span></td>
+                    <td>{s.avgAttendance.toFixed(1)}%</td>
+                    <td>{s.studentCount}</td>
+                    <td>{s.passCount}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
-};
+}
 
 export default Reports;
